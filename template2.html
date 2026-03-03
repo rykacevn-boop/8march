@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тебе послание! ✨</title>
+    <style>
+        body {
+            margin: 0; padding: 0; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: #fff0f5; font-family: 'Arial', sans-serif; overflow: hidden;
+        }
+        #container { text-align: center; position: relative; width: 100%; max-width: 500px; padding: 20px; }
+        
+        .envelope { width: 150px; cursor: pointer; transition: transform 0.3s; margin-bottom: 20px; }
+        .envelope:hover { transform: rotate(-5deg) scale(1.1); }
+
+        h2 { color: #d63384; margin-bottom: 30px; font-size: 24px; }
+
+        .btn-group { display: flex; justify-content: center; align-items: center; gap: 20px; min-height: 200px; }
+
+        #btn-yes {
+            background-color: #ff69b4; border: none; color: white;
+            padding: 15px 35px; border-radius: 50px; cursor: pointer;
+            font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,105,180,0.4);
+            transition: all 0.2s ease-out; z-index: 100;
+        }
+
+        #btn-no {
+            background-color: white; border: 2px solid #ffb6c1; color: #ff69b4;
+            padding: 10px 25px; border-radius: 50px; cursor: pointer;
+            font-size: 16px; transition: all 0.2s; position: absolute;
+        }
+
+        .hidden { display: none; }
+        .congrats-text { font-size: 28px; color: #ff1493; animation: heartBeat 1.2s infinite; }
+
+        @keyframes heartBeat {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div id="container">
+    <div id="game-part">
+        <img src="https://img.icons8.com/clouds/200/envelope.png" class="envelope">
+        <h2 id="main-title">Откроешь мой конверт? 💌</h2>
+        
+        <div class="btn-group">
+            <button id="btn-yes">ДА!</button>
+            <button id="btn-no">Нет</button>
+        </div>
+    </div>
+
+    <div id="final-part" class="hidden">
+        <div class="congrats-text">🌸 С 8 МАРТА! 🌸</div>
+        <p style="font-size: 18px; color: #666;">Ты — самое прекрасное, что случилось этой весной!</p>
+        <div style="font-size: 50px;">💐✨💖</div>
+    </div>
+</div>
+
+<script>
+    const btnNo = document.getElementById('btn-no');
+    const btnYes = document.getElementById('btn-yes');
+    const gamePart = document.getElementById('game-part');
+    const finalPart = document.getElementById('final-part');
+    const title = document.getElementById('main-title');
+
+    let yesScale = 1;
+    let noScale = 1;
+
+    // Функция "убегания" и уменьшения кнопки НЕТ
+    function moveNo() {
+        noScale -= 0.15;
+        yesScale += 0.4;
+
+        if (noScale < 0.2) {
+            btnNo.style.display = 'none';
+        } else {
+            // Случайные координаты
+            const x = Math.random() * (window.innerWidth - btnNo.offsetWidth);
+            const y = Math.random() * (window.innerHeight - btnNo.offsetHeight);
+            
+            btnNo.style.position = 'fixed';
+            btnNo.style.left = x + 'px';
+            btnNo.style.top = y + 'px';
+            btnNo.style.transform = `scale(${noScale})`;
+        }
+
+        btnYes.style.transform = `scale(${yesScale})`;
+        title.innerText = "Ну пожалуйста! 🥺";
+    }
+
+    btnNo.addEventListener('mouseover', moveNo);
+    btnNo.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
+
+    btnYes.addEventListener('click', () => {
+        gamePart.classList.add('hidden');
+        finalPart.classList.remove('hidden');
+        // Эффект конфетти можно добавить тут
+    });
+</script>
+
+</body>
+</html>
