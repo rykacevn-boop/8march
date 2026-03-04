@@ -4,67 +4,107 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Собери свой букет 💐</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b8860b, #fcf6ba, #aa8954);
+            --pearl: radial-gradient(circle, #ffffff 0%, #f3f3f3 100%);
+        }
+
         body {
             margin: 0; padding: 0; height: 100vh;
-            background: radial-gradient(circle, #fff0f5 0%, #fecfef 100%);
-            font-family: 'Arial', sans-serif; overflow: hidden; touch-action: none;
+            background: var(--pearl);
+            font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
+            display: flex; justify-content: center; align-items: center;
         }
 
+        /* Верхняя панель управления */
         #game-ui {
-            position: absolute; width: 100%; top: 20px; text-align: center;
-            color: #d81b60; font-weight: bold; z-index: 10;
+            position: absolute; width: 100%; top: 30px; text-align: center;
+            color: #4a4a4a; z-index: 10; font-size: 0.9rem;
+            letter-spacing: 2px; text-transform: uppercase;
         }
 
+        #count {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem; color: #d4af37; font-weight: bold;
+        }
+
+        /* Стили цветов */
         .flower-item {
-            position: absolute; width: 60px; height: 60px;
-            cursor: pointer; transition: transform 0.3s ease;
-            z-index: 5; font-size: 40px; display: flex;
-            justify-content: center; align-items: center;
+            position: absolute; width: 70px; height: 70px;
+            cursor: pointer; z-index: 5; font-size: 50px; 
+            display: flex; justify-content: center; align-items: center;
             user-select: none;
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
-        /* Финальная карточка */
+        .flower-item:active { transform: scale(1.5); }
+
+        /* Финальная карточка (Luxury Boutique Style) */
         #final-card {
             display: none; position: relative; z-index: 20;
-            background: rgba(255, 255, 255, 0.9);
-            padding: 30px; border-radius: 25px;
-            box-shadow: 0 15px 35px rgba(216, 27, 96, 0.2);
-            text-align: center; max-width: 85%;
-            animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px 30px; border-radius: 0px; /* Прямые углы выглядят дороже */
+            text-align: center; max-width: 350px; width: 85%;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.12);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            animation: luxePop 1s ease-out;
         }
 
-        @keyframes popIn {
-            0% { transform: scale(0); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
+        /* Золотая рамка внутри */
+        #final-card::before {
+            content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+            border: 1px solid #d4af37; pointer-events: none; opacity: 0.5;
+        }
+
+        @keyframes luxePop {
+            0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
         }
 
         #bouquet-container {
-            font-size: 80px; margin-bottom: 10px;
+            font-size: 100px; margin-bottom: 20px;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+        }
+
+        h1 { 
+            font-family: 'Playfair Display', serif;
+            color: #4a4a4a; font-size: 1.5rem; margin: 0; font-weight: 400;
+        }
+
+        #nameDisplay { 
+            font-family: 'Playfair Display', serif;
+            background: var(--gold);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.2rem; font-weight: 700; margin: 10px 0 20px 0;
         }
 
         #messageDisplay {
-            color: #880e4f;
-            font-size: 1.1rem;
-            line-height: 1.5;
-            white-space: pre-wrap; /* Сохраняем переносы строк */
+            color: #666; font-size: 1rem; line-height: 1.6;
+            font-weight: 300; white-space: pre-wrap;
         }
 
         .confetti {
-            position: absolute; width: 10px; height: 10px; z-index: 15;
-            pointer-events: none;
+            position: absolute; width: 6px; height: 6px; z-index: 15;
+            pointer-events: none; border-radius: 50%;
         }
     </style>
 </head>
-<body style="display: flex; justify-content: center; align-items: center;">
+<body>
 
-    <div id="game-ui">Нужно собрать все цветы для букета: <span id="count">0</span> / 10</div>
+    <div id="game-ui">
+        Соберите редкие цветы для букета<br>
+        <span id="count">0</span> <span style="font-size: 0.8rem; color: #999;">/ 10</span>
+    </div>
 
     <div id="final-card">
         <div id="bouquet-container">💐</div>
-        <h1 style="color: #d81b60; margin: 0;">С 8 Марта,</h1>
-        <div id="nameDisplay" style="color: #ad1457; font-size: 1.8rem; font-weight: bold; margin: 10px 0;"></div>
-        <div id="messageDisplay">Ты собрала самый красивый букет в мире! Пусть твоя жизнь будет такой же яркой! 🌸</div>
+        <h1>Для самой прекрасной</h1>
+        <div id="nameDisplay"></div>
+        <div id="messageDisplay">Ты собрала этот букет с любовью. Пусть каждый цветок в нём станет исполненным желанием! 🌸</div>
     </div>
 
     <script>
@@ -72,11 +112,10 @@
         const nameBase64 = params.get('name');
         const msgBase64 = params.get('msg');
         
-        const flowers = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '🍀'];
+        const flowers = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '✨'];
         let collected = 0;
         const total = 10;
 
-        // Универсальная функция декодирования
         function decodeBase64(str) {
             try {
                 return decodeURIComponent(atob(str).split('').map(c => 
@@ -84,11 +123,9 @@
             } catch (e) { return null; }
         }
 
-        // 1. Декодируем Имя
         const decodedName = decodeBase64(nameBase64);
-        document.getElementById('nameDisplay').innerText = (decodedName || "Прекрасная Дама") + "!";
+        document.getElementById('nameDisplay').innerText = (decodedName || "Леди");
 
-        // 2. Декодируем Сообщение
         const decodedMsg = decodeBase64(msgBase64);
         if (decodedMsg && decodedMsg.trim() !== "") {
             document.getElementById('messageDisplay').innerText = decodedMsg;
@@ -98,9 +135,16 @@
             const f = document.createElement('div');
             f.className = 'flower-item';
             f.innerText = flowers[Math.floor(Math.random() * flowers.length)];
-            f.style.left = Math.random() * (window.innerWidth - 60) + 'px';
-            f.style.top = Math.random() * (window.innerHeight - 60) + 'px';
+            f.style.left = (20 + Math.random() * (window.innerWidth - 100)) + 'px';
+            f.style.top = (100 + Math.random() * (window.innerHeight - 200)) + 'px';
             
+            // Легкое покачивание
+            f.animate([
+                { transform: 'translateY(0) rotate(0deg)' },
+                { transform: 'translateY(-15px) rotate(10deg)' },
+                { transform: 'translateY(0) rotate(0deg)' }
+            ], { duration: 2000 + Math.random()*2000, iterations: Infinity });
+
             f.onclick = () => collect(f);
             f.ontouchstart = (e) => { e.preventDefault(); collect(f); };
             
@@ -114,17 +158,18 @@
             collected++;
             document.getElementById('count').innerText = collected;
             
-            element.style.transition = "all 0.5s ease-in";
+            element.style.transition = "all 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045)";
             element.style.left = "50%";
             element.style.top = "50%";
-            element.style.transform = "scale(0) rotate(360deg)";
+            element.style.transform = "scale(0) rotate(720deg)";
+            element.style.filter = "blur(10px)";
             
-            if (window.navigator.vibrate) window.navigator.vibrate(30);
+            if (window.navigator.vibrate) window.navigator.vibrate(20);
 
-            setTimeout(() => element.remove(), 500);
+            setTimeout(() => element.remove(), 600);
 
             if (collected === total) {
-                setTimeout(showFinal, 600);
+                setTimeout(showFinal, 800);
             } else {
                 createFlower(); 
             }
@@ -132,35 +177,36 @@
 
         function showFinal() {
             document.getElementById('game-ui').style.display = 'none';
+            document.body.style.background = 'rgba(0,0,0,0.05)'; // Затемнение фона
             document.getElementById('final-card').style.display = 'block';
             createConfetti();
         }
 
         function createConfetti() {
-            for(let i=0; i<60; i++) {
+            const colors = ['#d4af37', '#ff69b4', '#ffffff', '#fcf6ba'];
+            for(let i=0; i<80; i++) {
                 const c = document.createElement('div');
                 c.className = 'confetti';
-                c.style.background = ['#ff69b4', '#ff1493', '#ffd700', '#ffffff', '#00ced1'][Math.floor(Math.random()*5)];
+                c.style.background = colors[Math.floor(Math.random()*colors.length)];
                 c.style.left = "50%";
                 c.style.top = "50%";
                 document.body.appendChild(c);
                 
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * 250 + 100;
+                const dist = Math.random() * 300 + 50;
                 
                 c.animate([
                     { transform: 'translate(-50%, -50%) translate(0, 0) scale(1)', opacity: 1 },
                     { transform: `translate(-50%, -50%) translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
                 ], { 
-                    duration: 1200 + Math.random()*800, 
+                    duration: 1500 + Math.random()*1000, 
                     fill: 'forwards',
                     easing: 'ease-out'
                 });
             }
         }
 
-        // Запуск первой порции цветов
-        for(let i=0; i<3; i++) createFlower();
+        for(let i=0; i<4; i++) setTimeout(createFlower, i*300);
     </script>
 </body>
 </html>

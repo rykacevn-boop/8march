@@ -4,54 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Твой сюрприз ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --gold-gradient: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
+            --rose-gold: linear-gradient(135deg, #e5b2ca 0%, #f9e3ef 45%, #d4a3b9 100%);
+        }
+
         body {
             margin: 0; padding: 0; height: 100vh;
-            background: #ff9a9e; font-family: 'Arial', sans-serif;
+            /* Благородный теплый фон */
+            background: radial-gradient(circle at center, #ffffff 0%, #fdf0f5 100%);
+            font-family: 'Montserrat', sans-serif;
             display: flex; justify-content: center; align-items: center;
             overflow: hidden; touch-action: none;
         }
 
-        .container { position: relative; width: 320px; height: 450px; }
+        .container { position: relative; width: 330px; height: 480px; }
 
-        /* Нижний слой (Поздравление) */
+        /* Нижний слой (Поздравление) - Эффект дорогой бумаги */
         .card-content {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; border-radius: 20px;
+            background: white; border-radius: 25px;
             display: flex; flex-direction: column; justify-content: center;
-            align-items: center; text-align: center; padding: 25px;
+            align-items: center; text-align: center; padding: 35px;
             box-sizing: border-box; z-index: 1;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.07);
+            border: 1px solid rgba(212, 175, 55, 0.2);
         }
 
-        /* Верхний слой (Холст для стирания) */
+        /* Декоративная внутренняя рамка */
+        .card-content::after {
+            content: ''; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
+            border: 1px solid #f3e5ab; border-radius: 18px; pointer-events: none;
+        }
+
+        /* Верхний слой (Холст) */
         #scratch-canvas {
             position: absolute; top: 0; left: 0;
             width: 100%; height: 100%;
-            border-radius: 20px; cursor: crosshair;
+            border-radius: 25px; cursor: crosshair;
             z-index: 2; touch-action: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
-        h1 { color: #d81b60; font-size: 1.8rem; margin: 10px 0; }
-        #nameDisplay { color: #ad1457; font-size: 1.6rem; font-weight: bold; margin-bottom: 15px; }
+        h1 { 
+            font-family: 'Playfair Display', serif;
+            color: #4a4a4a; font-size: 1.8rem; margin: 0 0 10px 0; 
+        }
+
+        #nameDisplay { 
+            font-family: 'Playfair Display', serif;
+            background: var(--gold-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem; font-weight: 700; margin-bottom: 20px; 
+        }
         
-        /* Стили для текста сообщения */
         #messageDisplay { 
-            color: #880e4f; 
-            font-size: 1.1rem; 
-            line-height: 1.4; 
-            white-space: pre-wrap; /* Сохраняем переносы строк */
+            color: #6d6d6d; font-size: 1.05rem; line-height: 1.6; font-weight: 300;
+            white-space: pre-wrap;
         }
 
         .hint { 
-            position: absolute; bottom: -40px; color: white; width: 100%; 
-            text-align: center; font-size: 0.9rem; opacity: 0.8; 
-            animation: pulse 1.5s infinite;
+            position: absolute; bottom: -50px; color: #ad1457; width: 100%; 
+            text-align: center; font-size: 0.85rem; font-weight: 600;
+            letter-spacing: 1px; text-transform: uppercase;
+            animation: pulse 2s infinite;
         }
+
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
         }
     </style>
 </head>
@@ -59,13 +83,13 @@
 
 <div class="container">
     <div class="card-content">
-        <h1>🌸 С 8 Марта!</h1>
+        <h1>С праздником,</h1>
         <div id="nameDisplay">Загрузка...</div>
-        <div id="messageDisplay">Пусть этот день будет таким же сияющим и чудесным, как ты сама! ✨<br><br>💐💐💐</div>
+        <div id="messageDisplay">Пусть этот день будет таким же сияющим и чудесным, как ты сама! ✨<br><br>💐</div>
     </div>
     
     <canvas id="scratch-canvas"></canvas>
-    <div class="hint">Сотри защитный слой пальцем 👆</div>
+    <div class="hint">Сотри золото пальцем 👆</div>
 </div>
 
 <script>
@@ -73,7 +97,6 @@
     const nameBase64 = params.get('name');
     const msgBase64 = params.get('msg');
 
-    // Функция декодирования
     function decodeBase64(str) {
         try {
             return decodeURIComponent(atob(str).split('').map(function(c) {
@@ -82,17 +105,14 @@
         } catch (e) { return null; }
     }
 
-    // 1. Декодирование данных
     const decodedName = decodeBase64(nameBase64);
     const decodedMsg = decodeBase64(msgBase64);
 
-    document.getElementById('nameDisplay').innerText = (decodedName || "Прекрасная Дама") + "!";
-    
+    document.getElementById('nameDisplay').innerText = (decodedName || "Прекрасная Дама");
     if (decodedMsg && decodedMsg.trim() !== "") {
         document.getElementById('messageDisplay').innerText = decodedMsg;
     }
 
-    // 2. Логика стирания
     const canvas = document.getElementById('scratch-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
@@ -101,35 +121,42 @@
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         
-        // Рисуем "защитный" слой (градиент под серебро)
-        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        gradient.addColorStop(0, '#d0d0d0');
-        gradient.addColorStop(0.5, '#f0f0f0');
-        gradient.addColorStop(1, '#b0b0b0');
+        // Розовое золото металлик
+        const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        grad.addColorStop(0, '#e5b2ca');
+        grad.addColorStop(0.3, '#f9e3ef');
+        grad.addColorStop(0.5, '#d4a3b9');
+        grad.addColorStop(0.7, '#f9e3ef');
+        grad.addColorStop(1, '#b5839a');
         
-        ctx.fillStyle = gradient;
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Текстура блесток
-        for(let i=0; i<400; i++) {
-            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-            ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1, 1);
+        // Добавляем эффект дорогого зернения (блестки)
+        for(let i=0; i<800; i++) {
+            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.4)' : 'rgba(212,175,55,0.2)';
+            ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
         }
         
-        ctx.fillStyle = "#888";
-        ctx.font = "bold 22px Arial";
+        // Элегантная надпись на слое
+        ctx.fillStyle = "rgba(74, 74, 74, 0.6)";
+        ctx.font = "600 14px Montserrat";
         ctx.textAlign = "center";
-        ctx.fillText("ТВОЙ СЮРПРИЗ ТУТ", canvas.width/2, canvas.height/2);
+        ctx.letterSpacing = "2px";
+        ctx.fillText("SCRATCH FOR SURPRISE", canvas.width/2, canvas.height/2);
     }
 
     function scratch(e) {
         if (!isDrawing) return;
         const rect = canvas.getBoundingClientRect();
-        const x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
-        const y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+        const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+        const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
 
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
+        // Плавный след
         ctx.arc(x, y, 35, 0, Math.PI * 2);
         ctx.fill();
         
@@ -144,11 +171,12 @@
             if (pixels[i] === 0) clearPixels++;
         }
         
-        if (clearPixels / (pixels.length / 4) > 0.45) {
-            canvas.style.transition = 'opacity 0.8s';
+        if (clearPixels / (pixels.length / 4) > 0.5) {
+            canvas.style.transition = 'all 1s ease-out';
+            canvas.style.filter = 'blur(10px)';
             canvas.style.opacity = '0';
-            setTimeout(() => canvas.remove(), 800);
-            if (window.navigator.vibrate) window.navigator.vibrate(50);
+            canvas.style.transform = 'scale(1.1)';
+            setTimeout(() => canvas.remove(), 1000);
         }
     }
 
