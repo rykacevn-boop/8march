@@ -2,106 +2,139 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тебе послание! ✨</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Твой сюрприз ✨</title>
     <style>
         body {
             margin: 0; padding: 0; height: 100vh;
+            background: #ff9a9e; font-family: 'Arial', sans-serif;
             display: flex; justify-content: center; align-items: center;
-            background: #fff0f5; font-family: 'Arial', sans-serif; overflow: hidden;
-        }
-        #container { text-align: center; position: relative; width: 100%; max-width: 500px; padding: 20px; }
-        
-        .envelope { width: 150px; cursor: pointer; transition: transform 0.3s; margin-bottom: 20px; }
-        .envelope:hover { transform: rotate(-5deg) scale(1.1); }
-
-        h2 { color: #d63384; margin-bottom: 30px; font-size: 24px; }
-
-        .btn-group { display: flex; justify-content: center; align-items: center; gap: 20px; min-height: 200px; }
-
-        #btn-yes {
-            background-color: #ff69b4; border: none; color: white;
-            padding: 15px 35px; border-radius: 50px; cursor: pointer;
-            font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(255,105,180,0.4);
-            transition: all 0.2s ease-out; z-index: 100;
+            overflow: hidden; touch-action: none;
         }
 
-        #btn-no {
-            background-color: white; border: 2px solid #ffb6c1; color: #ff69b4;
-            padding: 10px 25px; border-radius: 50px; cursor: pointer;
-            font-size: 16px; transition: all 0.2s; position: absolute;
+        .container { position: relative; width: 320px; height: 450px; }
+
+        /* Нижний слой (Поздравление) */
+        .card-content {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; border-radius: 20px;
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; text-align: center; padding: 20px;
+            box-sizing: border-box; z-index: 1;
         }
 
-        .hidden { display: none; }
-        .congrats-text { font-size: 28px; color: #ff1493; animation: heartBeat 1.2s infinite; }
-
-        @keyframes heartBeat {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+        /* Верхний слой (Холст для стирания) */
+        #scratch-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            border-radius: 20px; cursor: crosshair;
+            z-index: 2; touch-action: none;
         }
+
+        h1 { color: #d81b60; font-size: 2rem; margin: 10px 0; }
+        #nameDisplay { color: #ad1457; font-size: 1.8rem; font-weight: bold; }
+        p { color: #880e4f; font-size: 1.1rem; line-height: 1.4; }
+        .hint { position: absolute; bottom: -40px; color: white; width: 100%; text-align: center; font-size: 0.9rem; opacity: 0.8; }
     </style>
 </head>
 <body>
 
-<div id="container">
-    <div id="game-part">
-        <img src="https://img.icons8.com/clouds/200/envelope.png" class="envelope">
-        <h2 id="main-title">Откроешь мой конверт? 💌</h2>
-        
-        <div class="btn-group">
-            <button id="btn-yes">ДА!</button>
-            <button id="btn-no">Нет</button>
-        </div>
+<div class="container">
+    <div class="card-content">
+        <h1>🌸 С 8 Марта!</h1>
+        <div id="nameDisplay">Прекрасная Дама</div>
+        <p>Пусть этот день будет таким же сияющим и чудесным, как ты сама! ✨<br><br>💐💐💐</p>
     </div>
-
-    <div id="final-part" class="hidden">
-        <div class="congrats-text">🌸 С 8 МАРТА! 🌸</div>
-        <p style="font-size: 18px; color: #666;">Ты — самое прекрасное, что случилось этой весной!</p>
-        <div style="font-size: 50px;">💐✨💖</div>
-    </div>
+    
+    <canvas id="scratch-canvas"></canvas>
+    <div class="hint">Сотри защитный слой пальцем 👆</div>
 </div>
 
 <script>
-    const btnNo = document.getElementById('btn-no');
-    const btnYes = document.getElementById('btn-yes');
-    const gamePart = document.getElementById('game-part');
-    const finalPart = document.getElementById('final-part');
-    const title = document.getElementById('main-title');
-
-    let yesScale = 1;
-    let noScale = 1;
-
-    // Функция "убегания" и уменьшения кнопки НЕТ
-    function moveNo() {
-        noScale -= 0.15;
-        yesScale += 0.4;
-
-        if (noScale < 0.2) {
-            btnNo.style.display = 'none';
-        } else {
-            // Случайные координаты
-            const x = Math.random() * (window.innerWidth - btnNo.offsetWidth);
-            const y = Math.random() * (window.innerHeight - btnNo.offsetHeight);
-            
-            btnNo.style.position = 'fixed';
-            btnNo.style.left = x + 'px';
-            btnNo.style.top = y + 'px';
-            btnNo.style.transform = `scale(${noScale})`;
-        }
-
-        btnYes.style.transform = `scale(${yesScale})`;
-        title.innerText = "Ну пожалуйста! 🥺";
+    // 1. Декодирование имени
+    const params = new URLSearchParams(window.location.search);
+    const nameBase64 = params.get('name');
+    if (nameBase64) {
+        try {
+            const decodedName = decodeURIComponent(atob(nameBase64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            document.getElementById('nameDisplay').innerText = decodedName + '!';
+        } catch (e) { console.error(e); }
     }
 
-    btnNo.addEventListener('mouseover', moveNo);
-    btnNo.addEventListener('touchstart', (e) => { e.preventDefault(); moveNo(); });
+    // 2. Логика стирания
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
 
-    btnYes.addEventListener('click', () => {
-        gamePart.classList.add('hidden');
-        finalPart.classList.remove('hidden');
-        // Эффект конфетти можно добавить тут
+    // Устанавливаем размер холста
+    function initCanvas() {
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        // Рисуем "защитный" слой
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#c0c0c0'); // Серебристый
+        gradient.addColorStop(0.5, '#e0e0e0');
+        gradient.addColorStop(1, '#a0a0a0');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Добавляем текст на слой
+        ctx.fillStyle = "#777";
+        ctx.font = "20px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText("ТВОЙ СЮРПРИЗ ТУТ", canvas.width/2, canvas.height/2);
+    }
+
+    function scratch(e) {
+        if (!isDrawing) return;
+        
+        // Получаем координаты (мышь или тач)
+        const rect = canvas.getBoundingClientRect();
+        const x = (e.clientX || e.touches[0].clientX) - rect.left;
+        const y = (e.clientY || e.touches[0].clientY) - rect.top;
+
+        ctx.globalCompositeOperation = 'destination-out'; // Режим "стерки"
+        ctx.beginPath();
+        ctx.arc(x, y, 30, 0, Math.PI * 2);
+        ctx.fill();
+        
+        checkScratchProgress();
+    }
+
+    // Проверка: сколько стерто (чтобы убрать холст совсем в конце)
+    function checkScratchProgress() {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+        let clearPixels = 0;
+        for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] === 0) clearPixels++;
+        }
+        
+        // Если стерто более 50%, удаляем холст плавно
+        if (clearPixels / (pixels.length / 4) > 0.5) {
+            canvas.style.transition = 'opacity 1s';
+            canvas.style.opacity = '0';
+            setTimeout(() => canvas.remove(), 1000);
+            if (window.navigator.vibrate) window.navigator.vibrate(100); // Вибро на финише
+        }
+    }
+
+    canvas.addEventListener('mousedown', () => isDrawing = true);
+    canvas.addEventListener('touchstart', () => isDrawing = true);
+    window.addEventListener('mouseup', () => isDrawing = false);
+    window.addEventListener('touchend', () => isDrawing = false);
+    
+    canvas.addEventListener('mousemove', scratch);
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault(); // Запрещаем прокрутку страницы во время стирания
+        scratch(e);
     });
+
+    window.onload = initCanvas;
 </script>
 
 </body>
