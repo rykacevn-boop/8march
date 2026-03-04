@@ -3,110 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Пчелка: Физика</title>
+    <title>Помоги пчелке!</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        body { margin: 0; background: #fff5f8; overflow: hidden; font-family: sans-serif; touch-action: none; }
+        body { margin: 0; background: #fff5f8; overflow: hidden; font-family: sans-serif; touch-action: none; -webkit-user-select: none; }
         #canvas-container { position: relative; width: 100vw; height: 100vh; }
-        canvas { display: block; touch-action: none; -webkit-user-select: none; }
-        .ui { position: absolute; top: 20px; width: 100%; text-align: center; pointer-events: none; }
-        .ink-bar { width: 200px; height: 10px; background: #ddd; margin: 10px auto; border-radius: 5px; overflow: hidden; }
-        #ink-progress { width: 100%; height: 100%; background: #ff85a2; transition: width 0.2s; }
-        .card { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; width: 80%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 100; }
+        canvas { display: block; touch-action: none; }
+        .ui { position: absolute; top: 20px; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
+        .ink-bar { width: 180px; height: 8px; background: #eee; margin: 8px auto; border-radius: 4px; border: 1px solid #ff85a2; overflow: hidden; }
+        #ink-progress { width: 100%; height: 100%; background: #ff85a2; transition: width 0.1s; }
+        .card { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; width: 280px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 100; border: 2px solid #ff85a2; }
+        button { padding: 12px 25px; border: none; background: #ff85a2; color: white; border-radius: 10px; font-weight: bold; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div id="canvas-container">
         <div class="ui">
-            <div style="color: #ff85a2; font-weight: bold;">РИСУЙ ПУТЬ ПАЛЬЦЕМ ✍️</div>
+            <div style="color: #ff85a2; font-weight: bold; text-shadow: 1px 1px 0 white;">ЧЕРТИ ПУТЬ ПАЛЬЦЕМ ✍️</div>
             <div class="ink-bar"><div id="ink-progress"></div></div>
         </div>
         <canvas id="game"></canvas>
     </div>
 
     <div class="card" id="final-card">
-        <h2 id="nameDisplay"></h2>
-        <p id="messageDisplay"></p>
-        <button onclick="location.reload()" style="padding: 10px 20px; border: none; background: #ff85a2; color: white; border-radius: 5px;">Еще раз</button>
+        <h2 id="nameDisplay" style="color: #ff85a2; margin-top: 0;"></h2>
+        <p id="messageDisplay" style="line-height: 1.5;"></p>
+        <button onclick="location.reload()">ПОПРОБОВАТЬ СНОВА</button>
     </div>
 
     <script>
+        // Декодирование данных
         const params = new URLSearchParams(window.location.search);
-        function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return ""; } }
-        document.getElementById('nameDisplay').textContent = "С 8 Марта, " + decode(params.get('name')) + "!";
+        function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
+        document.getElementById('nameDisplay').textContent = decode(params.get('name'));
         document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
-        const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
+        const { Engine, Render, Runner, Bodies, Composite, Events, Vector } = Matter;
         const engine = Engine.create();
         const canvas = document.getElementById('game');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-
-        // Элементы
-        const bee = Bodies.circle(50, 80, 20, { restitution: 0.5, label: 'bee' });
-        const flower = Bodies.circle(canvas.width - 60, canvas.height - 80, 30, { isStatic: true, label: 'flower' });
-        const ground = Bodies.rectangle(canvas.width/2, canvas.height + 25, canvas.width, 50, { isStatic: true });
-        Composite.add(engine.world, [bee, flower, ground]);
-
-        // Отрисовка
         const ctx = canvas.getContext('2d');
-        (function update() {
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Создаем объекты
+        const bee = Bodies.circle(60, 100, 18, { restitution: 0.4, friction: 0.1, label: 'bee' });
+        const flower = Bodies.circle(canvas.width - 60, canvas.height - 100, 35, { isStatic: true, label: 'flower' });
+        const ground = Bodies.rectangle(canvas.width/2, canvas.height + 10, canvas.width, 20, { isStatic: true });
+        
+        // Препятствие посередине для интереса
+        const shelf = Bodies.rectangle(canvas.width/2, canvas.height/2, 120, 15, { isStatic: true, angle: 0.2, render: { fillStyle: '#d4af37' } });
+
+        Composite.add(engine.world, [bee, flower, ground, shelf]);
+
+        // Основной цикл
+        function run() {
             Engine.update(engine);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // Отрисовка тел
+            // Рисуем все тела мира
             Composite.allBodies(engine.world).forEach(body => {
                 ctx.beginPath();
-                body.vertices.forEach((v, i) => ctx.lineTo(v.x, v.y));
-                ctx.closePath();
-                ctx.fillStyle = body.label === 'line' ? '#ff85a2' : (body.isStatic ? '#d4af37' : 'transparent');
+                const vertices = body.vertices;
+                ctx.moveTo(vertices[0].x, vertices[0].y);
+                for (let i = 1; i < vertices.length; i++) ctx.lineTo(vertices[i].x, vertices[i].y);
+                ctx.lineTo(vertices[0].x, vertices[0].y);
+                
+                if (body.label === 'line') ctx.fillStyle = '#ff85a2';
+                else if (body.isStatic) ctx.fillStyle = '#d4af37';
+                else ctx.fillStyle = 'transparent';
+                
                 ctx.fill();
             });
 
-            // Эмодзи
-            ctx.font = '40px Arial';
-            ctx.fillText('🐝', bee.position.x - 20, bee.position.y + 15);
-            ctx.font = '60px Arial';
-            ctx.fillText('🌸', flower.position.x - 30, flower.position.y + 25);
+            // Рисуем эмодзи поверх
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '36px Arial';
+            ctx.fillText('🐝', bee.position.x, bee.position.y);
+            ctx.font = '55px Arial';
+            ctx.fillText('🌸', flower.position.x, flower.position.y);
 
-            if (!isDone) requestAnimationFrame(update);
-        })();
+            if (!isDone) requestAnimationFrame(run);
+        }
 
-        // Рисование
-        let isDrawing = false, ink = 1000, currentLine = [];
-        const startDraw = (e) => { isDrawing = true; currentLine = []; if(e.cancelable) e.preventDefault(); };
-        const draw = (e) => {
-            if (!isDrawing || ink <= 0) return;
+        // Логика рисования (Исправлено для iOS)
+        let isDrawing = false, ink = 800, lastPos = null;
+
+        function getPos(e) {
             const t = e.touches ? e.touches[0] : e;
-            const x = t.clientX, y = t.clientY;
-            
-            if (currentLine.length > 0) {
-                const last = currentLine[currentLine.length - 1];
-                const d = Math.hypot(x - last.x, y - last.y);
-                if (d > 5) {
-                    const segment = Bodies.rectangle((x + last.x)/2, (y + last.y)/2, d, 6, {
-                        isStatic: true, angle: Math.atan2(y - last.y, x - last.x), label: 'line'
-                    });
-                    Composite.add(engine.world, segment);
-                    ink -= d;
-                    document.getElementById('ink-progress').style.width = (ink/10) + '%';
-                }
-            }
-            currentLine.push({x, y});
+            const rect = canvas.getBoundingClientRect();
+            return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+        }
+
+        const startDraw = (e) => {
+            isDrawing = true;
+            lastPos = getPos(e);
+            if(e.cancelable) e.preventDefault();
         };
 
-        canvas.addEventListener('touchstart', startDraw);
-        canvas.addEventListener('touchmove', draw);
-        window.addEventListener('touchend', () => isDrawing = false);
+        const draw = (e) => {
+            if (!isDrawing || ink <= 0) return;
+            if(e.cancelable) e.preventDefault();
+            
+            const currentPos = getPos(e);
+            const dist = Vector.magnitude(Vector.sub(currentPos, lastPos));
 
-        // Победа
+            if (dist > 8) { // Создаем сегмент линии, если палец сдвинулся на 8+ пикселей
+                const mid = Vector.div(Vector.add(currentPos, lastPos), 2);
+                const angle = Math.atan2(currentPos.y - lastPos.y, currentPos.x - lastPos.x);
+                
+                const segment = Bodies.rectangle(mid.x, mid.y, dist + 2, 6, {
+                    isStatic: true,
+                    angle: angle,
+                    label: 'line',
+                    friction: 0.1
+                });
+
+                Composite.add(engine.world, segment);
+                ink -= dist;
+                document.getElementById('ink-progress').style.width = Math.max(0, (ink/8)) + '%';
+                lastPos = currentPos;
+            }
+        };
+
+        const stopDraw = () => { isDrawing = false; lastPos = null; };
+
+        canvas.addEventListener('touchstart', startDraw, {passive: false});
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        window.addEventListener('touchend', stopDraw);
+
+        // Столкновение
         let isDone = false;
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
-                if ((pair.bodyA.label === 'bee' && pair.bodyB.label === 'flower') || (pair.bodyB.label === 'bee' && pair.bodyA.label === 'flower')) {
-                    isDone = true; document.getElementById('final-card').style.display = 'block';
+                const labels = [pair.bodyA.label, pair.bodyB.label];
+                if (labels.includes('bee') && labels.includes('flower')) {
+                    isDone = true;
+                    document.getElementById('final-card').style.display = 'block';
                 }
             });
         });
+
+        run();
     </script>
 </body>
 </html>
