@@ -98,6 +98,45 @@
             margin-left: 5px;
             vertical-align: middle;
         }
+		
+		/* Базовый стиль иконки внутри кнопки сброса (Обычная тема) */
+		.btn-reset .btn-icon {
+			/* Меняем розовый на черный */
+			color: #000; 
+			
+			-webkit-text-fill-color: initial; /* Сбрасываем прозрачность */
+			background: none;
+			font-size: 1.1rem;
+			vertical-align: middle;
+			margin-left: 5px;
+		}
+
+		/* VIP стиль для кнопки сброса (если VIP тема активна) */
+		[data-vip="1"] .btn-reset .btn-icon {
+			/* В VIP режиме оставляем золото, иначе не будет видно на черном фоне */
+			background: var(--gold-grad);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			font-weight: bold;
+		}
+
+		#watermark {
+			position: fixed;       /* Фиксируем относительно экрана, а не контейнера */
+			bottom: 15px;          /* Отступ снизу */
+			right: 15px;           /* Отступ справа */
+			font-family: 'Montserrat', sans-serif; 
+			font-size: 10px;       /* Делаем чуть аккуратнее */
+			letter-spacing: 0.5px;
+			color: rgba(128, 128, 128, 0.5); /* Тонкий серый цвет */
+			z-index: 9999;         /* Чтобы всегда был сверху */
+			pointer-events: none;  /* Чтобы через него можно было кликать */
+			text-align: right;
+		}
+
+		/* Для VIP-режима сделаем его золотистым, но невидимым (как ты и планировал в логике) */
+		[data-vip="1"] #watermark {
+			color: rgba(212, 175, 55, 0.3);
+		}
 
         @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
