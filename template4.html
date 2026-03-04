@@ -7,25 +7,29 @@
     <title>Мозаика 8 Марта — Special Effects</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root { 
-            --p-pink: #ff85a2; 
-            --bg: radial-gradient(circle at center, #fff5f8 0%, #ffeaf1 100%); 
-            --gold: #d4af37; 
-            --deep-pink: #d1305c;
-            --glass: rgba(255, 255, 255, 0.85);
-            --card-bg: #ffffff;
-            --text-main: #444;
-        }
+		:root { 
+			--p-pink: #ff85a2; 
+			--bg: radial-gradient(circle at center, #fff5f8 0%, #ffeaf1 100%); 
+			--gold: #d4af37; 
+			--deep-pink: #d1305c;
+			--glass: rgba(255, 255, 255, 0.85);
+			--card-bg: #ffffff;
+			--text-main: #444;
+			/* Добавляем переменную градиента */
+			--gold-grad: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
+		}
 
-        /* ПРЕМИУМ ТЕМА */
-        [data-vip="1"] {
-            --bg: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            --glass: rgba(30, 30, 30, 0.85);
-            --p-pink: #d4af37; /* В премиуме розовый заменяем на золото */
-            --deep-pink: #fcf6ba;
-            --card-bg: #141414;
-            --text-main: #ffffff;
-        }
+		/* ПРЕМИУМ ТЕМА */
+		[data-vip="1"] {
+			--bg: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+			--glass: rgba(30, 30, 30, 0.85);
+			/* Заменяем старый желтый на металлический градиент */
+			--p-pink: #d4af37; 
+			--gold: #fcf6ba; 
+			--deep-pink: #d4af37;
+			--card-bg: #141414;
+			--text-main: #ffffff;
+		}
         
         body { 
             margin: 0; padding: 0; min-height: 100vh; 
@@ -99,6 +103,26 @@
             position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; 
             font-size: 12px; color: rgba(128,128,128,0.5); z-index: 9999; display: none;
         }
+		
+		.gold-text-effect {
+			background: var(--gold-grad);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+			display: inline-block;
+		}
+
+		/* Применяем металлическое золото к кнопкам в VIP режиме */
+		[data-vip="1"] .btn-wide {
+			background: var(--gold-grad) !important;
+			border: none;
+			color: #000; /* Черный текст на золоте читается лучше */
+			text-shadow: 0 1px 0 rgba(255,255,255,0.3);
+		}
+
+		[data-vip="1"] .score-box {
+			border: 2px solid #d4af37;
+			box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+		}
     </style>
 </head>
 <body>
