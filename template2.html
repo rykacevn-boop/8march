@@ -97,38 +97,36 @@
     const nameBase64 = params.get('name');
     const msgBase64 = params.get('msg');
 
-		// Функция безопасного декодирования Base64 (UTF-8)
-		function decodeBase64(str) {
-			if (!str) return null;
-			try {
-				// Декодируем base64 в строку байтов, затем преобразуем в UTF-8
-				const binaryString = atob(str);
-				const bytes = new Uint8Array(binaryString.length);
-				for (let i = 0; i < binaryString.length; i++) {
-					bytes[i] = binaryString.charCodeAt(i);
-				}
-				return new TextDecoder().decode(bytes);
-			} catch (e) {
-				console.error("Ошибка декодирования:", e);
-				return null;
-			}
-		}
+    const nameDisplay = document.getElementById('nameDisplay');
+    const msgDisplay = document.getElementById('messageDisplay');
 
-        const decodedName = decodeBase64(nameBase64);
-        display.innerText = (decodedName ? decodedName : "Прекрасная Дама");
-
-		// Применение текста
-		const decodedMsg = decodeBase64(msgBase64);
-		if (decodedMsg && decodedMsg.trim() !== "") {
-			msgDisplay.innerText = decodedMsg; // Для 1-й и 3-й открыток
-			// или document.getElementById('messageDisplay').innerText = decodedMsg;
-		}
-
-    document.getElementById('nameDisplay').innerText = (decodedName || "Прекрасная Дама");
-    if (decodedMsg && decodedMsg.trim() !== "") {
-        document.getElementById('messageDisplay').innerText = decodedMsg;
+    // Ультимативная функция декодирования
+    function decodeBase64(str) {
+        if (!str || str.trim() === "") return null;
+        try {
+            const cleanedStr = str.replace(/\s/g, '');
+            const binaryString = atob(cleanedStr);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder("utf-8").decode(bytes);
+        } catch (e) {
+            console.error("Ошибка декодирования:", e);
+            return null;
+        }
     }
 
+    // Применяем данные
+    const decodedName = decodeBase64(nameBase64);
+    nameDisplay.textContent = (decodedName || "Прекрасная Дама");
+
+    const decodedMsg = decodeBase64(msgBase64);
+    if (decodedMsg && decodedMsg.trim() !== "") {
+        msgDisplay.textContent = decodedMsg;
+    }
+
+    // Логика холста (Scratch)
     const canvas = document.getElementById('scratch-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
@@ -137,28 +135,22 @@
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         
-        // Розовое золото металлик
         const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
         grad.addColorStop(0, '#e5b2ca');
-        grad.addColorStop(0.3, '#f9e3ef');
         grad.addColorStop(0.5, '#d4a3b9');
-        grad.addColorStop(0.7, '#f9e3ef');
         grad.addColorStop(1, '#b5839a');
         
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Добавляем эффект дорогого зернения (блестки)
         for(let i=0; i<800; i++) {
             ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.4)' : 'rgba(212,175,55,0.2)';
             ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
         }
         
-        // Элегантная надпись на слое
         ctx.fillStyle = "rgba(74, 74, 74, 0.6)";
         ctx.font = "600 14px Montserrat";
         ctx.textAlign = "center";
-        ctx.letterSpacing = "2px";
         ctx.fillText("SCRATCH FOR SURPRISE", canvas.width/2, canvas.height/2);
     }
 
@@ -172,10 +164,8 @@
 
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        // Плавный след
         ctx.arc(x, y, 35, 0, Math.PI * 2);
         ctx.fill();
-        
         checkScratchProgress();
     }
 
@@ -186,12 +176,9 @@
         for (let i = 3; i < pixels.length; i += 4) {
             if (pixels[i] === 0) clearPixels++;
         }
-        
         if (clearPixels / (pixels.length / 4) > 0.5) {
             canvas.style.transition = 'all 1s ease-out';
-            canvas.style.filter = 'blur(10px)';
             canvas.style.opacity = '0';
-            canvas.style.transform = 'scale(1.1)';
             setTimeout(() => canvas.remove(), 1000);
         }
     }

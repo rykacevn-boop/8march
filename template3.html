@@ -107,118 +107,100 @@
         <div id="messageDisplay">Ты собрала этот букет с любовью. Пусть каждый цветок в нём станет исполненным желанием! 🌸</div>
     </div>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const nameBase64 = params.get('name');
-        const msgBase64 = params.get('msg');
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const nameBase64 = params.get('name');
+    const msgBase64 = params.get('msg');
+    
+    const flowers = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '✨'];
+    let collected = 0;
+    const total = 10;
+
+    function decodeBase64(str) {
+        if (!str || str.trim() === "") return null;
+        try {
+            const cleanedStr = str.replace(/\s/g, '');
+            const binaryString = atob(cleanedStr);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder("utf-8").decode(bytes);
+        } catch (e) { return null; }
+    }
+
+    // Применяем данные сразу
+    const decodedName = decodeBase64(nameBase64);
+    document.getElementById('nameDisplay').textContent = (decodedName || "Леди");
+
+    const decodedMsg = decodeBase64(msgBase64);
+    if (decodedMsg && decodedMsg.trim() !== "") {
+        document.getElementById('messageDisplay').textContent = decodedMsg;
+    }
+
+    function createFlower() {
+        const f = document.createElement('div');
+        f.className = 'flower-item';
+        f.innerText = flowers[Math.floor(Math.random() * flowers.length)];
+        f.style.left = (20 + Math.random() * (window.innerWidth - 100)) + 'px';
+        f.style.top = (100 + Math.random() * (window.innerHeight - 200)) + 'px';
         
-        const flowers = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '✨'];
-        let collected = 0;
-        const total = 10;
+        f.animate([
+            { transform: 'translateY(0) rotate(0deg)' },
+            { transform: 'translateY(-15px) rotate(10deg)' },
+            { transform: 'translateY(0) rotate(0deg)' }
+        ], { duration: 2000 + Math.random()*2000, iterations: Infinity });
 
-		// Функция безопасного декодирования Base64 (UTF-8)
-		function decodeBase64(str) {
-			if (!str) return null;
-			try {
-				// Декодируем base64 в строку байтов, затем преобразуем в UTF-8
-				const binaryString = atob(str);
-				const bytes = new Uint8Array(binaryString.length);
-				for (let i = 0; i < binaryString.length; i++) {
-					bytes[i] = binaryString.charCodeAt(i);
-				}
-				return new TextDecoder().decode(bytes);
-			} catch (e) {
-				console.error("Ошибка декодирования:", e);
-				return null;
-			}
-		}
+        f.onclick = () => collect(f);
+        f.ontouchstart = (e) => { e.preventDefault(); collect(f); };
+        document.body.appendChild(f);
+    }
 
-        const decodedName = decodeBase64(nameBase64);
-        display.innerText = (decodedName ? decodedName : "Прекрасная Дама");
+    function collect(element) {
+        if (element.getAttribute('data-collected')) return;
+        element.setAttribute('data-collected', 'true');
+        collected++;
+        document.getElementById('count').textContent = collected;
+        
+        element.style.transition = "all 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045)";
+        element.style.left = "50%";
+        element.style.top = "50%";
+        element.style.transform = "scale(0) rotate(720deg)";
+        
+        if (window.navigator.vibrate) window.navigator.vibrate(20);
+        setTimeout(() => element.remove(), 600);
 
-		// Применение текста
-		const decodedMsg = decodeBase64(msgBase64);
-		if (decodedMsg && decodedMsg.trim() !== "") {
-			msgDisplay.innerText = decodedMsg; // Для 1-й и 3-й открыток
-			// или document.getElementById('messageDisplay').innerText = decodedMsg;
-		}
-
-        function createFlower() {
-            const f = document.createElement('div');
-            f.className = 'flower-item';
-            f.innerText = flowers[Math.floor(Math.random() * flowers.length)];
-            f.style.left = (20 + Math.random() * (window.innerWidth - 100)) + 'px';
-            f.style.top = (100 + Math.random() * (window.innerHeight - 200)) + 'px';
-            
-            // Легкое покачивание
-            f.animate([
-                { transform: 'translateY(0) rotate(0deg)' },
-                { transform: 'translateY(-15px) rotate(10deg)' },
-                { transform: 'translateY(0) rotate(0deg)' }
-            ], { duration: 2000 + Math.random()*2000, iterations: Infinity });
-
-            f.onclick = () => collect(f);
-            f.ontouchstart = (e) => { e.preventDefault(); collect(f); };
-            
-            document.body.appendChild(f);
+        if (collected === total) {
+            setTimeout(showFinal, 800);
+        } else {
+            createFlower(); 
         }
+    }
 
-        function collect(element) {
-            if (element.getAttribute('data-collected')) return;
-            element.setAttribute('data-collected', 'true');
-            
-            collected++;
-            document.getElementById('count').innerText = collected;
-            
-            element.style.transition = "all 0.6s cubic-bezier(0.6, -0.28, 0.735, 0.045)";
-            element.style.left = "50%";
-            element.style.top = "50%";
-            element.style.transform = "scale(0) rotate(720deg)";
-            element.style.filter = "blur(10px)";
-            
-            if (window.navigator.vibrate) window.navigator.vibrate(20);
+    function showFinal() {
+        document.getElementById('game-ui').style.display = 'none';
+        document.getElementById('final-card').style.display = 'block';
+        createConfetti();
+    }
 
-            setTimeout(() => element.remove(), 600);
-
-            if (collected === total) {
-                setTimeout(showFinal, 800);
-            } else {
-                createFlower(); 
-            }
+    function createConfetti() {
+        const colors = ['#d4af37', '#ff69b4', '#ffffff'];
+        for(let i=0; i<60; i++) {
+            const c = document.createElement('div');
+            c.className = 'confetti';
+            c.style.background = colors[Math.floor(Math.random()*colors.length)];
+            c.style.left = "50%"; c.style.top = "50%";
+            document.body.appendChild(c);
+            const angle = Math.random() * Math.PI * 2;
+            const dist = Math.random() * 300 + 50;
+            c.animate([
+                { transform: 'translate(-50%, -50%) translate(0, 0)', opacity: 1 },
+                { transform: `translate(-50%, -50%) translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`, opacity: 0 }
+            ], { duration: 2000, fill: 'forwards' });
         }
+    }
 
-        function showFinal() {
-            document.getElementById('game-ui').style.display = 'none';
-            document.body.style.background = 'rgba(0,0,0,0.05)'; // Затемнение фона
-            document.getElementById('final-card').style.display = 'block';
-            createConfetti();
-        }
-
-        function createConfetti() {
-            const colors = ['#d4af37', '#ff69b4', '#ffffff', '#fcf6ba'];
-            for(let i=0; i<80; i++) {
-                const c = document.createElement('div');
-                c.className = 'confetti';
-                c.style.background = colors[Math.floor(Math.random()*colors.length)];
-                c.style.left = "50%";
-                c.style.top = "50%";
-                document.body.appendChild(c);
-                
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * 300 + 50;
-                
-                c.animate([
-                    { transform: 'translate(-50%, -50%) translate(0, 0) scale(1)', opacity: 1 },
-                    { transform: `translate(-50%, -50%) translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
-                ], { 
-                    duration: 1500 + Math.random()*1000, 
-                    fill: 'forwards',
-                    easing: 'ease-out'
-                });
-            }
-        }
-
-        for(let i=0; i<4; i++) setTimeout(createFlower, i*300);
-    </script>
+    for(let i=0; i<4; i++) setTimeout(createFlower, i*300);
+</script>
 </body>
 </html>

@@ -104,55 +104,61 @@
         <p id="messageDisplay">Пусть ваша жизнь будет наполнена ароматом цветов, <br> искренними улыбками и нежностью. 🌸</p>
     </div>
 
-    <script>
-        const params = new URLSearchParams(window.location.search);
-        const nameBase64 = params.get('name');
-        const msgBase64 = params.get('msg');
-        
-        const display = document.getElementById('nameDisplay');
-        const msgDisplay = document.getElementById('messageDisplay');
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const nameBase64 = params.get('name');
+    const msgBase64 = params.get('msg');
+    
+    const display = document.getElementById('nameDisplay');
+    const msgDisplay = document.getElementById('messageDisplay');
 
-		// Функция безопасного декодирования Base64 (UTF-8)
-		function decodeBase64(str) {
-			if (!str) return null;
-			try {
-				// Декодируем base64 в строку байтов, затем преобразуем в UTF-8
-				const binaryString = atob(str);
-				const bytes = new Uint8Array(binaryString.length);
-				for (let i = 0; i < binaryString.length; i++) {
-					bytes[i] = binaryString.charCodeAt(i);
-				}
-				return new TextDecoder().decode(bytes);
-			} catch (e) {
-				console.error("Ошибка декодирования:", e);
-				return null;
-			}
-		}
-
-        const decodedName = decodeBase64(nameBase64);
-        display.innerText = (decodedName ? decodedName : "Прекрасная Дама");
-
-		// Применение текста
-		const decodedMsg = decodeBase64(msgBase64);
-		if (decodedMsg && decodedMsg.trim() !== "") {
-			msgDisplay.innerText = decodedMsg; // Для 1-й и 3-й открыток
-			// или document.getElementById('messageDisplay').innerText = decodedMsg;
-		}
-
-        function createPetal() {
-            const petal = document.createElement('div');
-            petal.classList.add('petal');
-            const size = Math.random() * 12 + 8 + 'px';
-            petal.style.width = size;
-            petal.style.height = size;
-            petal.style.left = Math.random() * 100 + 'vw';
-            // Более плавная и медленная анимация для "дорогого" эффекта
-            petal.style.animationDuration = Math.random() * 5 + 5 + 's';
-            petal.style.filter = `blur(${Math.random() * 2}px)`;
-            document.body.appendChild(petal);
-            setTimeout(() => petal.remove(), 10000);
+    // Ультимативная функция декодирования (Base64 -> UTF-8)
+    function decodeBase64(str) {
+        if (!str || str.trim() === "") return null;
+        try {
+            // Очищаем строку от возможных пробелов, которые ломают atob
+            const cleanedStr = str.replace(/\s/g, '');
+            const binaryString = atob(cleanedStr);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder("utf-8").decode(bytes);
+        } catch (e) {
+            console.error("Критическая ошибка декодирования:", e);
+            return null;
         }
-        setInterval(createPetal, 400);
-    </script>
+    }
+
+    // 1. Применяем имя
+    const decodedName = decodeBase64(nameBase64);
+    if (decodedName) {
+        display.textContent = decodedName;
+    } else {
+        display.textContent = "Прекрасная Дама";
+    }
+
+    // 2. Применяем сообщение
+    const decodedMsg = decodeBase64(msgBase64);
+    if (decodedMsg && decodedMsg.trim() !== "") {
+        msgDisplay.textContent = decodedMsg;
+    }
+    // Если decodedMsg null, в HTML останется ваш стандартный текст
+
+    // 3. Анимация лепестков (оставляем без изменений)
+    function createPetal() {
+        const petal = document.createElement('div');
+        petal.classList.add('petal');
+        const size = Math.random() * 12 + 8 + 'px';
+        petal.style.width = size;
+        petal.style.height = size;
+        petal.style.left = Math.random() * 100 + 'vw';
+        petal.style.animationDuration = Math.random() * 5 + 5 + 's';
+        petal.style.filter = `blur(${Math.random() * 2}px)`;
+        document.body.appendChild(petal);
+        setTimeout(() => petal.remove(), 10000);
+    }
+    setInterval(createPetal, 400);
+</script>
 </body>
 </html>
