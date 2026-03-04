@@ -209,6 +209,27 @@
 			border: 1px solid var(--gold);
 			overflow: hidden;
 		}
+		
+		/* Делаем иконку сброса строго черной */
+		#reset-btn .btn-icon, 
+		#final-btn .btn-icon,
+		.btn-icon {
+			color: #000 !important;                /* Черный цвет текста */
+			-webkit-text-fill-color: #000 !important; /* Отменяем прозрачность для градиента */
+			background: none !important;           /* Убираем фоновый градиент */
+			-webkit-background-clip: initial !important; 
+			
+			font-weight: 900;                      /* Делаем символ жирнее, чтобы он не терялся */
+			display: inline-block;
+			vertical-align: middle;
+			filter: none !important;               /* Убираем свечение, если оно было */
+		}
+		
+		/* Скрываем ватермарк, если активен VIP-режим */
+		[data-vip="1"] #watermark {
+			display: none !important;
+		}
+		
         @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
 </head>
