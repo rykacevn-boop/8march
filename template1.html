@@ -7,30 +7,49 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
     <style>
+        /* --- ПЕРЕМЕННЫЕ ТЕМ --- */
         :root {
-            --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b8860b, #fcf6ba, #aa8954);
-            --soft-pink: #fff0f5;
-            --deep-pink: #880e4f;
+            /* Стандартная светлая тема */
+            --bg-gradient: radial-gradient(circle at center, #ffffff 0%, #ffe4e1 100%);
+            --card-bg: rgba(255, 255, 255, 0.7);
+            --card-border: rgba(212, 175, 55, 0.3);
+            --text-main: #4a4a4a;
+            --text-secondary: #5d5d5d;
+            --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b8860b, #fcf6ba, #aa8954);
+            --petal-color: linear-gradient(135deg, #ffcce0 0%, #ffb6c1 100%);
+            --inner-border: rgba(212, 175, 55, 0.4);
+        }
+
+        /* Черно-золотая PREMIUM тема */
+        [data-theme="dark"] {
+            --bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            --card-bg: rgba(20, 20, 20, 0.85);
+            --card-border: #d4af37;
+            --text-main: #ffffff;
+            --text-secondary: #e0e0e0;
+            --gold-gradient: linear-gradient(45deg, #d4af37, #f2d472, #b8860b, #f2d472, #d4af37);
+            --petal-color: linear-gradient(135deg, #d4af37 0%, #8a6d3b 100%);
+            --inner-border: rgba(212, 175, 55, 0.7);
         }
 
         body {
             margin: 0; padding: 0; display: flex; justify-content: center;
             align-items: center; height: 100vh;
-            background: radial-gradient(circle at center, #ffffff 0%, #ffe4e1 100%);
+            background: var(--bg-gradient);
             font-family: 'Montserrat', sans-serif; 
             overflow: hidden; text-align: center;
+            transition: background 1s ease;
         }
 
         .card {
             position: relative;
-            background: rgba(255, 255, 255, 0.7);
+            background: var(--card-bg);
             padding: 50px 40px;
             border-radius: 30px;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(212, 175, 55, 0.3);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.08), 
-                        inset 0 0 20px rgba(255,255,255,0.5);
+            border: 1px solid var(--card-border);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
             z-index: 10;
             max-width: 450px;
             width: 85%;
@@ -44,29 +63,28 @@
 
         .card::before {
             content: ""; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
-            border: 1px solid #d4af37; border-radius: 20px;
-            opacity: 0.4; pointer-events: none;
+            border: 1px solid var(--inner-border); border-radius: 20px;
+            pointer-events: none;
         }
 
         h1 { 
             font-family: 'Playfair Display', serif;
-            color: #4a4a4a; font-size: 1.8rem; margin: 0; 
+            color: var(--text-main); font-size: 1.8rem; margin: 0; 
             letter-spacing: 1px; font-weight: 400;
         }
 
         #nameDisplay { 
             font-family: 'Playfair Display', serif;
-            background: var(--gold);
+            background: var(--gold-gradient);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-size: 2.8rem; font-weight: 700; 
             display: block; margin: 15px 0 25px 0;
-            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.05));
         }
         
         #messageDisplay { 
             font-size: 1.1rem; 
-            color: #5d5d5d; 
+            color: var(--text-secondary); 
             line-height: 1.8;
             font-weight: 300;
             white-space: pre-wrap;
@@ -74,9 +92,8 @@
 
         .petal {
             position: absolute; 
-            background: linear-gradient(135deg, #ffcce0 0%, #ffb6c1 100%);
+            background: var(--petal-color);
             border-radius: 100% 0 100% 0; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             opacity: 0.6;
             pointer-events: none; 
             animation: fall linear forwards;
@@ -92,7 +109,7 @@
         #watermark {
             position: fixed; bottom: 10px; right: 10px; 
             font-family: sans-serif; font-size: 12px; 
-            color: rgba(0,0,0,0.3); z-index: 9999; display: none;
+            color: rgba(128,128,128,0.5); z-index: 9999; display: none;
         }
     </style>
 </head>
@@ -121,6 +138,7 @@
     const nameB64 = urlParams.get('name') || "";
     const msgB64 = urlParams.get('msg') || "";
     const vip = urlParams.get('vip') || "0";
+    const theme = urlParams.get('theme') || "light"; // Новая тема
     const musicId = urlParams.get('music') || "0";
     const receivedHash = urlParams.get('hash') || "";
 
@@ -130,14 +148,11 @@
     function decodeBase64(str) {
         if (!str || str.trim() === "") return null;
         try {
-            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-            while (base64.length % 4 !== 0) base64 += '=';
-            const binaryString = atob(base64);
-            const bytes = new Uint8Array(binaryString.length);
-            for (let i = 0; i < binaryString.length; i++) {
-                bytes[i] = binaryString.charCodeAt(i);
-            }
-            return new TextDecoder("utf-8").decode(bytes);
+            let base = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (base.length % 4 !== 0) base += '=';
+            return decodeURIComponent(atob(base).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
         } catch (e) { return null; }
     }
 
@@ -149,7 +164,6 @@
         petal.style.height = size;
         petal.style.left = Math.random() * 100 + 'vw';
         petal.style.animationDuration = Math.random() * 5 + 5 + 's';
-        petal.style.filter = `blur(${Math.random() * 2}px)`;
         document.body.appendChild(petal);
         setTimeout(() => petal.remove(), 10000);
     }
@@ -158,37 +172,39 @@
         if (!musicStarted && MUSIC_MAP[musicId]) {
             const audio = document.getElementById('bg-music');
             audio.src = MUSIC_MAP[musicId];
-            audio.play().catch(() => console.log("Нужно взаимодействие для звука"));
+            audio.play().catch(e => console.log("Sound blocked"));
             musicStarted = true;
         }
     }
 
-    // --- Инициализация при загрузке ---
+    // --- Инициализация ---
     window.onload = function() {
-        // 1. Проверка безопасности
-        const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
+        // 1. Проверка безопасности (Теперь включает theme!)
+        const checkString = nameB64 + msgB64 + vip + musicId + theme + SECRET_SALT;
         const calculatedHash = CryptoJS.MD5(checkString).toString();
         const watermark = document.getElementById('watermark');
 
+        // 2. Установка темы
         if (vip === '1' && calculatedHash === receivedHash) {
             if (watermark) watermark.remove();
-            console.log("✅ Premium Active");
+            if (theme === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
         } else {
             if (watermark) watermark.style.display = 'block';
         }
 
-        // 2. Отображение текста
+        // 3. Отображение текста
         const decodedName = decodeBase64(nameB64);
         document.getElementById('nameDisplay').textContent = decodedName || "Прекрасная Дама";
         
         const decodedMsg = decodeBase64(msgB64);
         if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
 
-        // 3. Запуск анимации
+        // 4. Эффекты
         setInterval(createPetal, 400);
     };
 
-    // 4. Запуск музыки при первом клике/касании
     document.body.addEventListener('click', startMusic, { once: true });
     document.body.addEventListener('touchstart', startMusic, { once: true });
 </script>
