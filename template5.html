@@ -37,8 +37,12 @@
         document.getElementById('nameDisplay').textContent = decode(params.get('name'));
         document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
-        const { Engine, Bodies, Composite, Events, Vector } = Matter;
+        const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
+        
+        // Снижаем гравитацию для более плавного падения
+        engine.gravity.y = 0.6; 
+
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
 
@@ -49,8 +53,17 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Объекты
-        const bee = Bodies.circle(60, 100, 18, { restitution: 0.4, friction: 0.1, label: 'bee' });
+        // Динамический запас чернил в зависимости от ширины экрана
+        let maxInk = canvas.width * 1.5;
+        let ink = maxInk;
+
+        // Объекты: пчела изначально статична (заморожена)
+        const bee = Bodies.circle(60, 100, 18, { 
+            restitution: 0.4, 
+            friction: 0.1, 
+            label: 'bee',
+            isStatic: true 
+        });
         const flower = Bodies.circle(canvas.width - 60, canvas.height - 100, 35, { isStatic: true, label: 'flower' });
         const ground = Bodies.rectangle(canvas.width/2, canvas.height + 10, canvas.width, 20, { isStatic: true });
         Composite.add(engine.world, [bee, flower, ground]);
@@ -63,7 +76,7 @@
                 body.vertices.forEach((v, i) => ctx.lineTo(v.x, v.y));
                 ctx.closePath();
                 if (body.label === 'line') ctx.fillStyle = '#ff85a2';
-                else if (body.isStatic) ctx.fillStyle = '#d4af37';
+                else if (body.isStatic && body.label !== 'bee') ctx.fillStyle = '#d4af37';
                 else ctx.fillStyle = 'transparent';
                 ctx.fill();
             });
@@ -75,12 +88,10 @@
             if (!isDone) requestAnimationFrame(run);
         }
 
-        // --- УНИВЕРСАЛЬНОЕ УПРАВЛЕНИЕ (TOUCH + MOUSE) ---
-        let isDrawing = false, ink = 800, lastPos = null;
+        let isDrawing = false, lastPos = null;
 
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
-            // Проверяем, тач это или мышь
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
             const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
             return { x: clientX - rect.left, y: clientY - rect.top };
@@ -89,6 +100,12 @@
         const startDraw = (e) => {
             isDrawing = true;
             lastPos = getPos(e);
+            
+            // Размораживаем пчелу при первом взаимодействии
+            if (bee.isStatic) {
+                Body.setStatic(bee, false);
+            }
+            
             if(e.cancelable) e.preventDefault();
         };
 
@@ -106,19 +123,21 @@
                 });
                 Composite.add(engine.world, segment);
                 ink -= dist;
-                document.getElementById('ink-progress').style.width = Math.max(0, (ink/8)) + '%';
+                
+                // Процентное обновление полоски
+                const inkPercent = Math.max(0, (ink / maxInk) * 100);
+                document.getElementById('ink-progress').style.width = inkPercent + '%';
+                
                 lastPos = currentPos;
             }
         };
 
         const stopDraw = () => { isDrawing = false; lastPos = null; };
 
-        // Слушатели для мыши
         canvas.addEventListener('mousedown', startDraw);
         window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', stopDraw);
 
-        // Слушатели для тача
         canvas.addEventListener('touchstart', startDraw, {passive: false});
         canvas.addEventListener('touchmove', draw, {passive: false});
         window.addEventListener('touchend', stopDraw);
