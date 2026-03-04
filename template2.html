@@ -129,7 +129,7 @@
     const receivedHash = params.get('hash') || "";
 	const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
 	const style = getComputedStyle(document.documentElement);
-	const c1 = style.getPropertyValue('--scratch-start').trim(); // Возьмет цвет из CSS темы
+const c1 = style.getPropertyValue('--scratch-start').trim(); // Возьмет цвет из CSS темы
 
     let musicStarted = false;
 
