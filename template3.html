@@ -116,20 +116,32 @@
         let collected = 0;
         const total = 10;
 
-        function decodeBase64(str) {
-            try {
-                return decodeURIComponent(atob(str).split('').map(c => 
-                    '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-            } catch (e) { return null; }
-        }
+		// Функция безопасного декодирования Base64 (UTF-8)
+		function decodeBase64(str) {
+			if (!str) return null;
+			try {
+				// Декодируем base64 в строку байтов, затем преобразуем в UTF-8
+				const binaryString = atob(str);
+				const bytes = new Uint8Array(binaryString.length);
+				for (let i = 0; i < binaryString.length; i++) {
+					bytes[i] = binaryString.charCodeAt(i);
+				}
+				return new TextDecoder().decode(bytes);
+			} catch (e) {
+				console.error("Ошибка декодирования:", e);
+				return null;
+			}
+		}
 
         const decodedName = decodeBase64(nameBase64);
-        document.getElementById('nameDisplay').innerText = (decodedName || "Леди");
+        display.innerText = (decodedName ? decodedName : "Прекрасная Дама");
 
-        const decodedMsg = decodeBase64(msgBase64);
-        if (decodedMsg && decodedMsg.trim() !== "") {
-            document.getElementById('messageDisplay').innerText = decodedMsg;
-        }
+		// Применение текста
+		const decodedMsg = decodeBase64(msgBase64);
+		if (decodedMsg && decodedMsg.trim() !== "") {
+			msgDisplay.innerText = decodedMsg; // Для 1-й и 3-й открыток
+			// или document.getElementById('messageDisplay').innerText = decodedMsg;
+		}
 
         function createFlower() {
             const f = document.createElement('div');
