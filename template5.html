@@ -21,7 +21,6 @@
         
         canvas { 
             display: block; 
-            /* ИСПОЛЬЗУЕМ ПРЯМУЮ ССЫЛКУ (RAW) */
             background-image: linear-gradient(rgba(255,255,255,0.2), rgba(255,255,255,0.2)), 
                               url('https://raw.githubusercontent.com/rykacevn-boop/8march/main/%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%BD%D0%BE%D0%B5%20(1).jpg'); 
             background-size: cover;
@@ -41,6 +40,16 @@
             padding: 12px 30px; background: var(--gold); border: none; color: white; 
             border-radius: 50px; font-weight: bold; cursor: pointer; pointer-events: auto; z-index: 20; 
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); 
+            transition: all 0.3s ease;
+        }
+
+        /* Стиль для неактивной кнопки */
+        #reset-btn:disabled {
+            background: #ccc;
+            box-shadow: none;
+            cursor: not-allowed;
+            opacity: 0.5;
+            transform: translateX(-50%) scale(0.95);
         }
 
         .card { 
@@ -58,7 +67,7 @@
             <div class="title">С Праздником 8 Марта! ✨</div>
             <div class="ink-bar"><div id="ink-progress"></div></div>
         </div>
-        <button id="reset-btn" onclick="resetLevel()">СНАЧАЛА 🔄</button>
+        <button id="reset-btn" onclick="resetLevel()" disabled>СНАЧАЛА 🔄</button>
         <canvas id="game"></canvas>
     </div>
 
@@ -81,8 +90,8 @@
 
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
+        const resetBtn = document.getElementById('reset-btn');
 
-        // ПРЕДЗАГРУЗКА ИЗОБРАЖЕНИЯ ПЧЕЛЫ
         const beeImg = new Image();
         beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
@@ -104,36 +113,33 @@
         const ground = Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true });
         Composite.add(engine.world, [bee, flower, ground]);
 
-		function resetLevel() {
-			// 1. Останавливаем старую анимацию
-			if (animationId) cancelAnimationFrame(animationId);
-			
-			isDone = false;
-			isDrawing = false;
-			document.getElementById('final-card').style.display = 'none';
+        function resetLevel() {
+            if (animationId) cancelAnimationFrame(animationId);
+            
+            // Блокируем кнопку при сбросе
+            resetBtn.disabled = true;
+            
+            isDone = false;
+            isDrawing = false;
+            document.getElementById('final-card').style.display = 'none';
 
-			// 2. Удаляем только нарисованные линии
-			const bodies = Composite.allBodies(engine.world);
-			bodies.forEach(b => { 
-				if(b.label === 'line') Composite.remove(engine.world, b); 
-			});
+            const bodies = Composite.allBodies(engine.world);
+            bodies.forEach(b => { 
+                if(b.label === 'line') Composite.remove(engine.world, b); 
+            });
 
-			// 3. ПОЛНЫЙ СБРОС ПЧЕЛЫ
-			Body.setStatic(bee, true); // Замораживаем
-			Body.setPosition(bee, { x: 70, y: 100 }); // Возвращаем в старт
-			Body.setVelocity(bee, { x: 0, y: 0 }); // Обнуляем скорость
-			Body.setAngularVelocity(bee, 0); // Обнуляем вращение
-			Body.setAngle(bee, 0); // Выравниваем
-			bee.force = { x: 0, y: 0 }; // Убираем накопленные силы
-			bee.torque = 0; // Убираем крутящий момент
+            Body.setStatic(bee, true);
+            Body.setPosition(bee, { x: 70, y: 100 });
+            Body.setVelocity(bee, { x: 0, y: 0 });
+            Body.setAngularVelocity(bee, 0);
+            Body.setAngle(bee, 0);
+            bee.force = { x: 0, y: 0 };
+            bee.torque = 0;
 
-			// 4. Сброс UI
-			ink = maxInk;
-			document.getElementById('ink-progress').style.width = '100%';
-
-			// 5. Перезапуск цикла
-			run();
-		}
+            ink = maxInk;
+            document.getElementById('ink-progress').style.width = '100%';
+            run();
+        }
 
         function run() {
             if (isDone) return; 
@@ -153,7 +159,6 @@
                     ctx.save();
                     ctx.translate(body.position.x, body.position.y);
                     ctx.rotate(body.angle);
-                    // Отрисовка пчелы (масштабируем картинку под радиус тела)
                     ctx.drawImage(beeImg, -30, -30, 60, 60);
                     ctx.restore();
                 }
@@ -166,7 +171,6 @@
             animationId = requestAnimationFrame(run);
         }
 
-        // --- Обработка ввода (мышь и тач) ---
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -174,18 +178,19 @@
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-		const startDraw = (e) => {
-			if (isDone) return;
-			isDrawing = true; 
-			lastPos = getPos(e);
-			
-			// Активируем физику пчелы только если она еще стоит
-			if (bee.isStatic) {
-				Body.setStatic(bee, false);
-			}
-			
-			if(e.cancelable) e.preventDefault();
-		};
+        const startDraw = (e) => {
+            if (isDone) return;
+            isDrawing = true; 
+            lastPos = getPos(e);
+            
+            if (bee.isStatic) {
+                Body.setStatic(bee, false);
+                // Активируем кнопку только когда пошло рисование
+                resetBtn.disabled = false;
+            }
+            
+            if(e.cancelable) e.preventDefault();
+        };
 
         const draw = (e) => {
             if (!isDrawing || ink <= 0 || isDone) return;
@@ -215,6 +220,8 @@
                 const labels = [pair.bodyA.label, pair.bodyB.label];
                 if (labels.includes('bee') && labels.includes('flower') && !isDone) {
                     isDone = true;
+                    // Блокируем кнопку при победе
+                    resetBtn.disabled = true;
                     setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 300);
                 }
             });
