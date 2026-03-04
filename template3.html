@@ -8,31 +8,36 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            /* Светлая тема */
-            --bg-pearl: radial-gradient(circle, #ffffff 0%, #f3f3f3 100%);
-            --ui-text: #4a4a4a;
-            --card-bg: rgba(255, 255, 255, 0.95);
+            /* СТАНДАРТНАЯ ТЕМА (vip=0) */
             --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b8860b, #fcf6ba, #aa8954);
-            --msg-text: #666;
-            --flower-filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
+            --bg-gradient: radial-gradient(circle, #ffffff 0%, #f3f3f3 100%);
+            --ui-text: #4a4a4a;
+            --ui-hint: #999999;
+            --card-bg: rgba(255, 255, 255, 0.95);
+            --text-h1: #4a4a4a;
+            --text-msg: #666666;
+            --border-inner: rgba(212, 175, 55, 0.3);
+            --card-shadow: 0 30px 60px rgba(0,0,0,0.12);
         }
 
-        /* Black & Gold Premium Тема */
-        [data-theme="dark"] {
-            --bg-pearl: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
-            --ui-text: #d4af37;
-            --card-bg: rgba(15, 15, 15, 0.98);
-            --gold: linear-gradient(45deg, #d4af37, #fcf6ba, #b8860b, #fcf6ba, #d4af37);
-            --msg-text: #e0e0e0;
-            --flower-filter: drop-shadow(0 0 10px rgba(212, 175, 55, 0.6));
+        /* ПРЕМИУМ ТЕМА (vip=1) */
+        [data-vip="1"] {
+            --bg-gradient: radial-gradient(circle, #1a1a1a 0%, #000000 100%);
+            --ui-text: #e0e0e0;
+            --ui-hint: #aaaaaa;
+            --card-bg: rgba(20, 20, 20, 0.95);
+            --text-h1: #ffffff;
+            --text-msg: #cccccc;
+            --border-inner: rgba(212, 175, 55, 0.5);
+            --card-shadow: 0 30px 60px rgba(0,0,0,0.5);
         }
 
         body {
             margin: 0; padding: 0; height: 100vh;
-            background: var(--bg-pearl);
+            background: var(--bg-gradient);
             font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none;
             display: flex; justify-content: center; align-items: center;
-            transition: background 1s ease;
+            transition: background 0.5s ease;
         }
 
         #game-ui {
@@ -51,7 +56,7 @@
             cursor: pointer; z-index: 5; font-size: 50px; 
             display: flex; justify-content: center; align-items: center;
             user-select: none;
-            filter: var(--flower-filter);
+            filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
             transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -62,14 +67,15 @@
             background: var(--card-bg);
             padding: 40px 30px; border-radius: 0px; 
             text-align: center; max-width: 350px; width: 85%;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
-            border: 1px solid rgba(212, 175, 55, 0.5);
+            box-shadow: var(--card-shadow);
+            border: 1px solid var(--border-inner);
             animation: luxePop 1s ease-out;
+            transition: all 0.5s ease;
         }
 
         #final-card::before {
             content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
-            border: 1px solid #d4af37; pointer-events: none; opacity: 0.5;
+            border: 1px solid var(--border-inner); pointer-events: none; opacity: 0.5;
         }
 
         @keyframes luxePop {
@@ -79,12 +85,12 @@
 
         #bouquet-container {
             font-size: 100px; margin-bottom: 20px;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
         }
 
         h1 { 
             font-family: 'Playfair Display', serif;
-            color: var(--ui-text); font-size: 1.5rem; margin: 0; font-weight: 400;
+            color: var(--text-h1); font-size: 1.5rem; margin: 0; font-weight: 400;
         }
 
         #nameDisplay { 
@@ -96,7 +102,7 @@
         }
 
         #messageDisplay {
-            color: var(--msg-text); font-size: 1rem; line-height: 1.6;
+            color: var(--text-msg); font-size: 1rem; line-height: 1.6;
             font-weight: 300; white-space: pre-wrap;
         }
 
@@ -116,7 +122,7 @@
 
     <div id="game-ui">
         Соберите редкие цветы для букета<br>
-        <span id="count">0</span> <span style="font-size: 0.8rem; color: #999;">/ 10</span>
+        <span id="count">0</span> <span style="font-size: 0.8rem; color: var(--ui-hint);">/ 10</span>
     </div>
 
     <div id="final-card">
@@ -130,6 +136,7 @@
     <audio id="bg-music" loop></audio>
 
 <script>
+    // --- Настройки ---
     const SECRET_SALT = "MySuperSecret8March2026"; 
     const MUSIC_MAP = {
         "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -142,12 +149,12 @@
     const msgB64 = params.get('msg') || "";
     const vip = params.get('vip') || "0";
     const musicId = params.get('music') || "0";
-    const theme = params.get('theme') || "light"; // Параметр темы
     const receivedHash = params.get('hash') || "";
-
-    const flowers_light = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '✨'];
-    const flowers_dark = ['✨', '💎', '💫', '🌟', '⚜️', '🔥', '🏵️', '🔱'];
     
+    // Определяем тему для расчета хеша
+    const theme = (vip === '1') ? "dark" : "light";
+
+    const flowers = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '✨'];
     let collected = 0;
     const total = 10;
     let musicStarted = false;
@@ -173,11 +180,7 @@
     function createFlower() {
         const f = document.createElement('div');
         f.className = 'flower-item';
-        
-        // Выбор набора эмодзи в зависимости от темы
-        const currentSet = (theme === 'dark') ? flowers_dark : flowers_light;
-        f.innerText = currentSet[Math.floor(Math.random() * currentSet.length)];
-        
+        f.innerText = flowers[Math.floor(Math.random() * flowers.length)];
         f.style.left = (20 + Math.random() * (window.innerWidth - 100)) + 'px';
         f.style.top = (100 + Math.random() * (window.innerHeight - 200)) + 'px';
         
@@ -194,7 +197,9 @@
 
     function collect(element) {
         if (element.getAttribute('data-collected')) return;
+        
         startMusic();
+
         element.setAttribute('data-collected', 'true');
         collected++;
         document.getElementById('count').textContent = collected;
@@ -217,14 +222,14 @@
     function showFinal() {
         document.getElementById('game-ui').style.display = 'none';
         document.getElementById('final-card').style.display = 'block';
-        if (theme === 'dark') {
-            document.getElementById('bouquet-container').innerText = '💎'; // Премиум букет
-        }
         createConfetti();
     }
 
     function createConfetti() {
-        const colors = theme === 'dark' ? ['#d4af37', '#f2d472', '#ffffff'] : ['#d4af37', '#ff69b4', '#ffffff'];
+        // Меняем цвета конфетти в зависимости от статуса VIP
+        const isVip = document.documentElement.getAttribute('data-vip') === '1';
+        const colors = isVip ? ['#d4af37', '#fcf6ba', '#ffffff'] : ['#d4af37', '#ff69b4', '#ffffff'];
+        
         for(let i=0; i<60; i++) {
             const c = document.createElement('div');
             c.className = 'confetti';
@@ -241,24 +246,26 @@
     }
 
     window.onload = function() {
+        // Проверка безопасности с учетом theme
         const checkString = nameB64 + msgB64 + vip + musicId + theme + SECRET_SALT;
         const calculatedHash = CryptoJS.MD5(checkString).toString();
         const watermark = document.getElementById('watermark');
 
         if (vip === '1' && calculatedHash === receivedHash) {
+            document.documentElement.setAttribute('data-vip', '1');
             if (watermark) watermark.remove();
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
         } else {
+            document.documentElement.removeAttribute('data-vip');
             if (watermark) watermark.style.display = 'block';
         }
 
+        // Тексты
         const decodedName = decodeBase64(nameB64);
         document.getElementById('nameDisplay').textContent = (decodedName || "Леди");
         const decodedMsg = decodeBase64(msgB64);
         if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
 
+        // Инициализация цветов
         for(let i=0; i<4; i++) setTimeout(createFlower, i*300);
     };
 </script>
