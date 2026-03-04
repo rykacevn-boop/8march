@@ -218,30 +218,48 @@
         }
     }
 
-    window.onload = function() {
-        const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
-        const calculatedHash = CryptoJS.MD5(checkString).toString();
-        const watermark = document.getElementById('watermark');
+// ... (ваши константы и функции дешифровки остаются прежними)
 
-        if (vipParam === '1' && calculatedHash === receivedHash) {
-            if (watermark) watermark.remove(); 
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
-        } else {
-            if (watermark) watermark.style.display = 'block';
-        }
+	window.onload = function() {
+		// 1. Получаем параметры
+		const decodedName = decodeBase64(nameBase64);
+		const decodedMsg = decodeBase64(msgBase64);
+		
+		// 2. Формируем строку для проверки (ПОРЯДОК ВАЖЕН!)
+		// В Python: f"{name_b64}{msg_b64}{is_vip}{music_id}{theme}{SECRET_SALT}"
+		const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
+		const calculatedHash = CryptoJS.MD5(checkString).toString();
 
-        const decodedName = decodeBase64(nameBase64);
-        document.getElementById('nameDisplay').textContent = (decodedName || "Прекрасная Дама");
+		// --- ОТЛАДКА (удалите в продакшене) ---
+		console.log("Check String JS:", checkString);
+		console.log("Calculated Hash:", calculatedHash);
+		console.log("Received Hash:", receivedHash);
+		// --------------------------------------
 
-        const decodedMsg = decodeBase64(msgBase64);
-        if (decodedMsg) {
-            document.getElementById('messageDisplay').textContent = decodedMsg;
-        }
+		const watermark = document.getElementById('watermark');
 
-        initCanvas();
-    };
+		// 3. ПРОВЕРКА ХЕША И VIP-СТАТУСА
+		if (calculatedHash === receivedHash && vipParam === '1') {
+			console.log("Premium status confirmed! ✨");
+			if (watermark) watermark.remove();
+			
+			if (theme === 'dark') {
+				document.documentElement.setAttribute('data-theme', 'dark');
+			}
+		} else {
+			console.log("Standard version (Hash mismatch or not VIP)");
+			if (watermark) watermark.style.display = 'block';
+		}
+
+		// 4. Отрисовка текста
+		document.getElementById('nameDisplay').textContent = (decodedName || "Прекрасная Дама");
+		if (decodedMsg) {
+			document.getElementById('messageDisplay').textContent = decodedMsg;
+		}
+
+		// 5. Инициализация холста (после установки темы!)
+		setTimeout(initCanvas, 50); // Небольшая задержка, чтобы стили CSS успели обновиться
+	};
 
     canvas.addEventListener('mousedown', () => isDrawing = true);
     canvas.addEventListener('touchstart', () => isDrawing = true);
