@@ -15,6 +15,7 @@
 			--bg-gradient: ...; --card-bg: white;
         }		
 
+
         body {
             margin: 0; padding: 0; height: 100vh;
             background: radial-gradient(circle at center, #ffffff 0%, #fdf0f5 100%);
@@ -127,9 +128,6 @@
     const vipParam = params.get('vip') || "0";
     const musicId = params.get('music') || "0";
     const receivedHash = params.get('hash') || "";
-	const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
-	const style = getComputedStyle(document.documentElement);
-const c1 = style.getPropertyValue('--scratch-start').trim(); // Возьмет цвет из CSS темы
 
     let musicStarted = false;
 
