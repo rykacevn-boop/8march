@@ -10,61 +10,34 @@
 
     <style>
         :root {
-            /* Стандартная тема (Розовый/Белый) */
-            --bg-gradient: radial-gradient(circle at center, #ffffff 0%, #fdf0f5 100%);
-            --card-bg: white;
-            --text-h1: #4a4a4a;
-            --text-msg: #6d6d6d;
-            --border-inner: #f3e5ab;
             --gold-gradient: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
-            --hint-color: #ad1457;
-            
-            /* Цвета для стираемого слоя (Rose) */
-            --scratch-start: #e5b2ca;
-            --scratch-mid: #d4a3b9;
-            --scratch-end: #b5839a;
-        }
-
-        /* Чёрно-золотая тема (Premium) */
-        [data-vip="1"] {
-            --bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            --card-bg: #141414;
-            --text-h1: #ffffff;
-            --text-msg: #e0e0e0;
-            --border-inner: rgba(212, 175, 55, 0.4);
-            --hint-color: #d4af37;
-
-            /* Цвета для стираемого слоя (Gold) */
-            --scratch-start: #bf953f;
-            --scratch-mid: #fcf6ba;
-            --scratch-end: #aa8954;
-        }
+            --rose-gold: linear-gradient(135deg, #e5b2ca 0%, #f9e3ef 45%, #d4a3b9 100%);
+			--bg-gradient: ...; --card-bg: white;
+        }		
 
         body {
             margin: 0; padding: 0; height: 100vh;
-            background: var(--bg-gradient);
+            background: radial-gradient(circle at center, #ffffff 0%, #fdf0f5 100%);
             font-family: 'Montserrat', sans-serif;
             display: flex; justify-content: center; align-items: center;
             overflow: hidden; touch-action: none;
-            transition: background 0.8s ease;
         }
 
         .container { position: relative; width: 330px; height: 480px; }
 
         .card-content {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--card-bg); border-radius: 25px;
+            background: white; border-radius: 25px;
             display: flex; flex-direction: column; justify-content: center;
             align-items: center; text-align: center; padding: 35px;
             box-sizing: border-box; z-index: 1;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.07);
             border: 1px solid rgba(212, 175, 55, 0.2);
-            transition: background 0.5s ease;
         }
 
         .card-content::after {
             content: ''; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
-            border: 1px solid var(--border-inner); border-radius: 18px; pointer-events: none;
+            border: 1px solid #f3e5ab; border-radius: 18px; pointer-events: none;
         }
 
         #scratch-canvas {
@@ -72,12 +45,12 @@
             width: 100%; height: 100%;
             border-radius: 25px; cursor: crosshair;
             z-index: 2; touch-action: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
 
         h1 { 
             font-family: 'Playfair Display', serif;
-            color: var(--text-h1); font-size: 1.8rem; margin: 0 0 10px 0; 
+            color: #4a4a4a; font-size: 1.8rem; margin: 0 0 10px 0; 
         }
 
         #nameDisplay { 
@@ -89,12 +62,12 @@
         }
         
         #messageDisplay { 
-            color: var(--text-msg); font-size: 1.05rem; line-height: 1.6; font-weight: 300;
+            color: #6d6d6d; font-size: 1.05rem; line-height: 1.6; font-weight: 300;
             white-space: pre-wrap;
         }
 
         .hint { 
-            position: absolute; bottom: -50px; color: var(--hint-color); width: 100%; 
+            position: absolute; bottom: -50px; color: #ad1457; width: 100%; 
             text-align: center; font-size: 0.85rem; font-weight: 600;
             letter-spacing: 1px; text-transform: uppercase;
             animation: pulse 2s infinite;
@@ -107,10 +80,18 @@
 
         #watermark {
             position: fixed; bottom: 10px; right: 10px; 
-            font-family: sans-serif; font-size: 11px; 
-            color: rgba(128,128,128,0.4); z-index: 9999; 
+            font-family: sans-serif; font-size: 12px; 
+            color: rgba(0,0,0,0.3); z-index: 9999; 
             display: none;
         }
+
+
+		/* При наличии атрибута data-vip="1" — премиум инверсия */
+		[data-vip="1"] {
+			--bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+			--card-bg: #141414;
+			--text-h1: #ffffff;
+		}
     </style>
 </head>
 <body>
@@ -123,13 +104,15 @@
     </div>
     
     <canvas id="scratch-canvas"></canvas>
-    <div class="hint">Сотри слой пальцем 👆</div>
+    <div class="hint">Сотри золото пальцем 👆</div>
 </div>
 
 <div id="watermark">Создано в @postcard_congrat_bot</div>
+
 <audio id="bg-music" loop></audio>
 
 <script>
+    // --- НАСТРОЙКИ ---
     const SECRET_SALT = "MySuperSecret8March2026"; 
     const MUSIC_MAP = {
         "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -137,52 +120,58 @@
         "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
     };
 
+    // --- ДЕКОДИРОВАНИЕ ДАННЫХ ---
     const params = new URLSearchParams(window.location.search);
     const nameBase64 = params.get('name') || "";
     const msgBase64 = params.get('msg') || "";
     const vipParam = params.get('vip') || "0";
     const musicId = params.get('music') || "0";
-    const theme = params.get('theme') || "light"; // Берем тему из URL
     const receivedHash = params.get('hash') || "";
+	const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
+	const style = getComputedStyle(document.documentElement);
+	const c1 = style.getPropertyValue('--scratch-start').trim(); // Возьмет цвет из CSS темы
 
     let musicStarted = false;
-    const canvas = document.getElementById('scratch-canvas');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
 
     function decodeBase64(str) {
-        if (!str) return null;
+        if (!str || str.trim() === "") return null;
         try {
             let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
             while (base64.length % 4 !== 0) base64 += '=';
-            return decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-        } catch (e) { return null; }
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder("utf-8").decode(bytes);
+        } catch (e) {
+            return null;
+        }
     }
+
+    // --- ЛОГИКА ХОЛСТА (SCRATCH) ---
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx = canvas.getContext('2d');
+    let isDrawing = false;
 
     function initCanvas() {
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         
-        // Получаем текущие цвета из CSS (они меняются при [data-vip="1"])
-        const style = getComputedStyle(document.documentElement);
-        const c1 = style.getPropertyValue('--scratch-start').trim();
-        const c2 = style.getPropertyValue('--scratch-mid').trim();
-        const c3 = style.getPropertyValue('--scratch-end').trim();
-
         const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        grad.addColorStop(0, c1);
-        grad.addColorStop(0.5, c2);
-        grad.addColorStop(1, c3);
+        grad.addColorStop(0, '#e5b2ca');
+        grad.addColorStop(0.5, '#d4a3b9');
+        grad.addColorStop(1, '#b5839a');
         
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
         for(let i=0; i<800; i++) {
-            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.4)' : 'rgba(212,175,55,0.3)';
+            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.4)' : 'rgba(212,175,55,0.2)';
             ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
         }
         
-        ctx.fillStyle = (vipParam === '1') ? "rgba(0, 0, 0, 0.7)" : "rgba(74, 74, 74, 0.6)";
+        ctx.fillStyle = "rgba(74, 74, 74, 0.6)";
         ctx.font = "600 14px Montserrat";
         ctx.textAlign = "center";
         ctx.fillText("SCRATCH FOR SURPRISE", canvas.width/2, canvas.height/2);
@@ -192,53 +181,69 @@
         if (!musicStarted && MUSIC_MAP[musicId]) {
             const audio = document.getElementById('bg-music');
             audio.src = MUSIC_MAP[musicId];
-            audio.play().catch(e => console.log("Audio blocked"));
+            audio.play().catch(e => console.log("Sound blocked"));
             musicStarted = true;
         }
     }
 
     function scratch(e) {
         if (!isDrawing) return;
+        
+        // Запуск музыки при первом взаимодействии
         startMusic();
+
         const rect = canvas.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        ctx.arc(clientX - rect.left, clientY - rect.top, 35, 0, Math.PI * 2);
+        ctx.arc(x, y, 35, 0, Math.PI * 2);
         ctx.fill();
         checkScratchProgress();
     }
 
     function checkScratchProgress() {
-        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-        let clear = 0;
-        for (let i = 3; i < pixels.length; i += 4) if (pixels[i] === 0) clear++;
-        if (clear / (pixels.length / 4) > 0.5) {
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+        let clearPixels = 0;
+        for (let i = 3; i < pixels.length; i += 4) {
+            if (pixels[i] === 0) clearPixels++;
+        }
+        if (clearPixels / (pixels.length / 4) > 0.5) {
+            canvas.style.transition = 'all 1s ease-out';
             canvas.style.opacity = '0';
             setTimeout(() => canvas.remove(), 1000);
         }
     }
 
     window.onload = function() {
-        // ВАЖНО: Строка хеша должна совпадать с Python-ботом!
-        // f"{name_b64}{msg_b64}{is_vip}{music_id}{theme}{SECRET_SALT}"
-        const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
+        // 1. Проверка Premium (Хеш включает musicId)
+        const checkString = nameBase64 + msgBase64 + vipParam + musicId + SECRET_SALT;
         const calculatedHash = CryptoJS.MD5(checkString).toString();
         const watermark = document.getElementById('watermark');
 
-        // Если хеш верный и VIP включен
-        if (calculatedHash === receivedHash && vipParam === '1') {
-            document.documentElement.setAttribute('data-vip', '1');
-            if (watermark) watermark.remove();
+        if (vipParam === '1' && calculatedHash === receivedHash) {
+            if (watermark) watermark.remove(); 
         } else {
             if (watermark) watermark.style.display = 'block';
         }
 
-        document.getElementById('nameDisplay').textContent = decodeBase64(nameBase64) || "Прекрасная Дама";
-        const decodedMsg = decodeBase64(msgBase64);
-        if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
+        // 2. Отображение текста
+        const nameDisplay = document.getElementById('nameDisplay');
+        const msgDisplay = document.getElementById('messageDisplay');
+        
+        const decodedName = decodeBase64(nameBase64);
+        nameDisplay.textContent = (decodedName || "Прекрасная Дама");
 
+        const decodedMsg = decodeBase64(msgBase64);
+        if (decodedMsg && decodedMsg.trim() !== "") {
+            msgDisplay.textContent = decodedMsg;
+        }
+
+        // 3. Инициализация стирального слоя
         initCanvas();
     };
 
@@ -248,6 +253,7 @@
     window.addEventListener('touchend', () => isDrawing = false);
     canvas.addEventListener('mousemove', scratch);
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); }, {passive: false});
+
 </script>
 </body>
 </html>
