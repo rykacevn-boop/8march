@@ -35,7 +35,7 @@
         <h1 style="margin:0; font-size: 1.2rem;">С праздником!</h1>
         <span class="card-name" id="nameDisplay"></span>
         <p id="messageDisplay" style="line-height: 1.6;"></p>
-        <button onclick="location.reload()">ИГРАТЬ ЕЩЕ</button>
+        <button onclick="resetLevel()">ИГРАТЬ ЕЩЕ</button>
     </div>
 
     <script>
@@ -60,44 +60,42 @@
 
         let maxInk = canvas.width * 1.5;
         let ink = maxInk;
-        let isDrawing = false, lastPos = null, isDone = false;
+        let isDrawing = false, lastPos = null, isDone = false, animationId;
 
-        // Создаем пчелу как глобальный объект, чтобы не пересоздавать её
         const bee = Bodies.circle(60, 120, 18, { 
-            restitution: 0.3, 
-            friction: 0.1, 
-            label: 'bee', 
-            isStatic: true,
-            inertia: Infinity // Чтобы она не крутилась бешено
+            restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity 
         });
         const flower = Bodies.circle(canvas.width - 60, canvas.height - 100, 35, { isStatic: true, label: 'flower' });
         const ground = Bodies.rectangle(canvas.width/2, canvas.height + 10, canvas.width, 20, { isStatic: true });
         
         Composite.add(engine.world, [bee, flower, ground]);
 
-        // ИСПРАВЛЕННАЯ ФУНКЦИЯ СБРОСА
         function resetLevel() {
-            isDone = false;
+            // 1. Скрываем карточку и сбрасываем флаг завершения
             document.getElementById('final-card').style.display = 'none';
+            const wasDone = isDone;
+            isDone = false;
             
-            // 1. Удаляем только линии
+            // 2. Удаляем линии
             const bodies = Composite.allBodies(engine.world);
             bodies.forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
 
-            // 2. СБРОС ПЧЕЛЫ (Самый важный момент)
-            Body.setStatic(bee, true); // Сначала замораживаем
-            Body.setPosition(bee, { x: 60, y: 120 }); // Возвращаем в старт
-            Body.setVelocity(bee, { x: 0, y: 0 }); // Обнуляем скорость
-            Body.setAngularVelocity(bee, 0); // Обнуляем вращение
-            Body.setAngle(bee, 0); // Выравниваем
+            // 3. Сброс пчелы
+            Body.setStatic(bee, true);
+            Body.setPosition(bee, { x: 60, y: 120 });
+            Body.setVelocity(bee, { x: 0, y: 0 });
+            Body.setAngularVelocity(bee, 0);
+            Body.setAngle(bee, 0);
             
-            // 3. Сброс чернил
+            // 4. Сброс чернил
             ink = maxInk;
             document.getElementById('ink-progress').style.width = '100%';
-            
-            // Визуальный эффект вспышки
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // 5. Перезапуск цикла отрисовки, если он был остановлен
+            if (wasDone) {
+                cancelAnimationFrame(animationId);
+                run();
+            }
         }
 
         function run() {
@@ -118,15 +116,16 @@
                 ctx.shadowBlur = 0;
             });
 
-            // Рисуем пчелу и цветок
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.font = '36px Arial'; ctx.fillText('🐝', bee.position.x, bee.position.y);
             ctx.font = '55px Arial'; ctx.fillText('🌸', flower.position.x, flower.position.y);
 
-            if (!isDone) requestAnimationFrame(run);
+            // Цикл продолжается, пока уровень не пройден
+            if (!isDone) {
+                animationId = requestAnimationFrame(run);
+            }
         }
 
-        // УПРАВЛЕНИЕ
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
