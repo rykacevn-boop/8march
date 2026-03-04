@@ -154,6 +154,29 @@
 		text-transform: uppercase;
 		letter-spacing: 2px;
 	}
+	
+	/* Базовый стиль иконки внутри кнопки сброса */
+	.btn-reset .btn-icon {
+		color: var(--p-pink);
+		-webkit-text-fill-color: initial; /* Сбрасываем прозрачность для обычной темы */
+		background: none;
+		font-size: 1.1rem;
+	}
+
+	/* VIP стиль для кнопки сброса */
+	[data-vip="1"] .btn-reset .btn-icon {
+		background: var(--gold-grad);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		font-weight: bold;
+	}
+
+	/* Эффект при наведении на VIP-кнопку */
+	[data-vip="1"] .btn-reset:hover {
+		background: rgba(212, 175, 55, 0.1);
+		box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+		border-color: #fcf6ba;
+	}
     </style>
 </head>
 <body>
@@ -180,12 +203,14 @@
 			</button>
 		</div>
 
-        <button class="btn-reset" id="reset-btn" onclick="playerReset(true)">Начать заново 🔄</button>
+        <button class="btn-reset" id="reset-btn" onclick="playerReset(true)">
+		Начать заново <span class="btn-icon" style="font-size: 1.1rem; vertical-align: middle; margin-left: 5px;">⟲</span>
+	</button>
     </div>
 
     <div class="card" id="final-card">
-        <h1 style="font-family:'Playfair Display'; margin:0; font-size: 1.8rem; color: var(--text-main);">С праздником весны!</h1>
-        <span id="nameDisplay" class="card-name"></span>
+        <h1 style="font-family:'Playfair Display'; margin:0; font-size: 1.8rem; color: var(--text-main); gold-text-effect;">С праздником весны!</h1>
+        <span id="nameDisplay" class="card-name gold-text-effect"></span>
         <p id="messageDisplay" style="color: var(--text-main); line-height:1.8; font-size: 1.15rem;"></p>
         <button onclick="location.reload()" style="margin-top:30px; padding:20px 50px; border-radius:25px; border:none; background:var(--gold); color:black; font-weight:bold; cursor:pointer; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.4);">ЕЩЁ РАЗ ✨</button>
     </div>
