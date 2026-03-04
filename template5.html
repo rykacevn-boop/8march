@@ -138,40 +138,46 @@
 			color: rgba(212, 175, 55, 0.3);
 		}
 
-		/* Общий контейнер UI для позиционирования */
+		/* Основной контейнер UI */
 		.ui {
 			position: absolute;
 			top: 20px;
-			width: 100%;
+			left: 0;           /* Важно: прижимаем к левому краю */
+			width: 100%;       /* Теперь 100% считается от края до края */
 			display: flex;
-			justify-content: center; /* Центрируем карточку по горизонтали */
+			justify-content: center; /* Центрируем карточку строго по середине */
+			align-items: center;
 			pointer-events: none;
 			z-index: 10;
+			margin: 0;         /* Убираем возможные внешние отступы */
 		}
 
-		/* Сама рамка-карточка */
+		/* Карточка с рамкой */
 		.ui-card {
-			background: var(--glass); /* Тот самый полупрозрачный фон */
+			background: var(--glass);
 			backdrop-filter: blur(10px);
 			-webkit-backdrop-filter: blur(10px);
-			padding: 15px 25px;
+			padding: 12px 20px;
 			border-radius: 20px;
-			border: 2px solid var(--gold); /* Золотая рамка */
-			box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+			border: 2px solid var(--gold);
+			box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 			display: flex;
 			flex-direction: column;
-			align-items: center; /* Центрируем текст и полоску внутри */
-			min-width: 280px;
+			align-items: center;
+			pointer-events: auto; /* Позволяем клики внутри карточки, если нужно */
+			min-width: 260px;
+			max-width: 90vw;      /* Чтобы не вылезала за края на узких телефонах */
 		}
 
-		/* Убираем лишние отступы у заголовка */
+		/* Уточняем заголовок */
 		.title {
-			margin: 0 0 10px 0 !important;
-			font-size: 1.3rem !important;
-			white-space: nowrap;
+			margin: 0 0 8px 0 !important;
+			font-size: 1.2rem !important;
+			text-align: center;
+			line-height: 1.2;
 		}
 
-		/* Настройка контейнера полоски */
+		/* Фикс для полоски, чтобы она не ломала центровку */
 		.ink-container {
 			width: 100%;
 			display: flex;
@@ -179,12 +185,14 @@
 			align-items: center;
 		}
 
-		/* Золотая полоска прогресса для VIP */
-		[data-vip="1"] .ui-card {
-			border: 2px solid #fcf6ba;
-			box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+		.ink-bar {
+			width: 200px; /* Фиксированная ширина полоски для стабильности */
+			height: 10px;
+			background: rgba(0,0,0,0.1);
+			border-radius: 10px;
+			border: 1px solid var(--gold);
+			overflow: hidden;
 		}
-
         @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
 </head>
