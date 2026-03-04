@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Королевский сад 8 Марта</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
         :root { 
             --primary-pink: #ff85a2; 
@@ -44,26 +44,16 @@
             z-index: 1;
         }
 
-        /* Описание задачи сбоку */
         .mission-sidebar {
-            position: absolute;
-            left: 20px;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 160px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 20px;
-            border-radius: 20px;
-            border-left: 5px solid var(--gold);
-            backdrop-filter: blur(5px);
-            z-index: 5;
-            pointer-events: none;
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+            width: 160px; background: rgba(255, 255, 255, 0.8); padding: 20px;
+            border-radius: 20px; border-left: 5px solid var(--gold);
+            backdrop-filter: blur(5px); z-index: 5; pointer-events: none;
             box-shadow: 0 10px 20px rgba(0,0,0,0.05);
         }
         .mission-sidebar h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin: 0 0 10px 0; color: var(--deep-pink); }
         .mission-sidebar p { font-size: 0.85rem; margin: 0; color: var(--text); line-height: 1.5; }
 
-        /* Верхний интерфейс */
         .ui { position: absolute; top: 30px; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
         .title { font-family: 'Playfair Display', serif; color: var(--text); font-size: 1.6rem; font-weight: 700; text-shadow: 0 1px 5px rgba(255,255,255,0.8); margin-bottom: 10px; }
         
@@ -72,28 +62,16 @@
         .ink-bar { width: 220px; height: 12px; background: rgba(0,0,0,0.1); border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; }
         #ink-progress { width: 100%; height: 100%; background: var(--gold); transition: width 0.1s ease-out; }
         
-        /* Кнопка сброса */
         #reset-btn { 
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
             padding: 14px 35px; background: var(--gold); border: none; color: white; 
             border-radius: 50px; font-weight: bold; cursor: pointer; pointer-events: auto; z-index: 20; 
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); 
             transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            font-size: 0.9rem;
-            letter-spacing: 1px;
+            font-size: 0.9rem; letter-spacing: 1px;
         }
+        #reset-btn:disabled { background: #ccc; box-shadow: none; cursor: not-allowed; opacity: 0.6; transform: translateX(-50%) scale(0.95); }
 
-        #reset-btn:disabled {
-            background: #ccc;
-            box-shadow: none;
-            cursor: not-allowed;
-            opacity: 0.6;
-            transform: translateX(-50%) scale(0.95);
-        }
-
-        #reset-btn:active:not(:disabled) { transform: translateX(-50%) scale(0.9); }
-
-        /* Финальная карточка */
         .card { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             padding: 40px; border-radius: 30px; width: 280px; text-align: center; z-index: 100; 
@@ -107,7 +85,11 @@
         .card p { line-height: 1.6; color: #666; font-size: 1rem; }
         .card button { padding: 15px 30px; border: none; background: var(--primary-pink); color: white; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 25px; box-shadow: 0 5px 15px rgba(255, 133, 162, 0.3); }
 
-        /* Адаптивность */
+        #watermark {
+            position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; 
+            font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;
+        }
+
         @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
 </head>
@@ -137,14 +119,38 @@
         <button onclick="resetLevel()">ПОПРОБОВАТЬ ЕЩЕ 🌸</button>
     </div>
 
+    <div id="watermark">Создано в @postcard_congrat_bot</div>
+    <audio id="bg-music" loop></audio>
+
     <script>
- 
+        // --- Настройки и Музыка ---
+        const SECRET_SALT = "MySuperSecret8March2026"; 
+        const MUSIC_MAP = {
+            "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+        };
+
         const params = new URLSearchParams(window.location.search);
+        const nameB64 = params.get('name') || "";
+        const msgB64 = params.get('msg') || "";
+        const vip = params.get('vip') || "0";
+        const musicId = params.get('music') || "0";
+        const receivedHash = params.get('hash') || "";
+
+        let musicStarted = false;
+        function startMusic() {
+            if (!musicStarted && MUSIC_MAP[musicId]) {
+                const audio = document.getElementById('bg-music');
+                audio.src = MUSIC_MAP[musicId];
+                audio.play().catch(() => console.log("Audio play blocked by browser"));
+                musicStarted = true;
+            }
+        }
+
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
-        document.getElementById('nameDisplay').textContent = decode(params.get('name'));
-        document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
-
+        // --- Физика игры ---
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
         engine.gravity.y = 0.55; 
@@ -152,8 +158,6 @@
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         const resetBtn = document.getElementById('reset-btn');
-
-
         const beeImg = new Image();
         beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
@@ -161,42 +165,27 @@
             canvas.width = Math.min(window.innerWidth * 0.92, 800);
             canvas.height = Math.min(window.innerHeight * 0.75, 600);
         }
-        window.addEventListener('resize', resize);
         resize();
 
         let maxInk = canvas.width * 1.5;
         let ink = maxInk;
         let isDrawing = false, lastPos = null, isDone = false, animationId = null;
 
-
-        const bee = Bodies.circle(70, 100, 25, { 
-            restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity
-        });
+        const bee = Bodies.circle(70, 100, 25, { restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity });
         const flower = Bodies.circle(canvas.width - 70, canvas.height - 110, 35, { isStatic: true, label: 'flower' });
         const ground = Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true });
         Composite.add(engine.world, [bee, flower, ground]);
 
         function resetLevel() {
             if (animationId) cancelAnimationFrame(animationId);
-            
             resetBtn.disabled = true;
-            isDone = false;
-            isDrawing = false;
+            isDone = false; isDrawing = false;
             document.getElementById('final-card').style.display = 'none';
-
-
-            const bodies = Composite.allBodies(engine.world);
-            bodies.forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
-
-
+            Composite.allBodies(engine.world).forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
             Body.setStatic(bee, true);
             Body.setPosition(bee, { x: 70, y: 100 });
             Body.setVelocity(bee, { x: 0, y: 0 });
-            Body.setAngularVelocity(bee, 0);
             Body.setAngle(bee, 0);
-            bee.force = { x: 0, y: 0 };
-            bee.torque = 0;
-
             ink = maxInk;
             document.getElementById('ink-progress').style.width = '100%';
             run();
@@ -206,33 +195,24 @@
             if (isDone) return; 
             Engine.update(engine);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
             Composite.allBodies(engine.world).forEach(body => {
                 if (body.label === 'line') {
                     ctx.beginPath();
                     body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
                     ctx.fillStyle = '#d4af37';
                     ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
+                    ctx.fill(); ctx.shadowBlur = 0;
                 }
-
                 if (body.label === 'bee') {
-                    ctx.save();
-                    ctx.translate(body.position.x, body.position.y);
-                    ctx.rotate(body.angle);
-                    ctx.drawImage(beeImg, -30, -30, 60, 60);
+                    ctx.save(); ctx.translate(body.position.x, body.position.y);
+                    ctx.rotate(body.angle); ctx.drawImage(beeImg, -30, -30, 60, 60);
                     ctx.restore();
                 }
             });
-
-
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.font = '58px Arial'; ctx.fillText('🌸', flower.position.x, flower.position.y);
-
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '58px Arial';
+            ctx.fillText('🌸', flower.position.x, flower.position.y);
             animationId = requestAnimationFrame(run);
         }
-
 
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
@@ -243,12 +223,9 @@
 
         const startDraw = (e) => {
             if (isDone) return;
-            isDrawing = true; 
-            lastPos = getPos(e);
-            if (bee.isStatic) {
-                Body.setStatic(bee, false);
-                resetBtn.disabled = false;
-            }
+            startMusic(); // Включаем музыку при первом касании
+            isDrawing = true; lastPos = getPos(e);
+            if (bee.isStatic) { Body.setStatic(bee, false); resetBtn.disabled = false; }
             if(e.cancelable) e.preventDefault();
         };
 
@@ -268,7 +245,6 @@
             }
         };
 
-
         canvas.addEventListener('mousedown', startDraw);
         window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', () => isDrawing = false);
@@ -276,51 +252,31 @@
         canvas.addEventListener('touchmove', draw, {passive: false});
         window.addEventListener('touchend', () => isDrawing = false);
 
-
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
                 const labels = [pair.bodyA.label, pair.bodyB.label];
                 if (labels.includes('bee') && labels.includes('flower') && !isDone) {
-                    isDone = true;
-                    resetBtn.disabled = true;
+                    isDone = true; resetBtn.disabled = true;
                     setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 400);
                 }
             });
         });
 
-        run();
-    </script>
-<div id="watermark" style="position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;">
-        Создано в @postcard_congrat_bot
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-    <script>
+        // --- Инициализация и Проверка ---
         window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const name = urlParams.get('name') || "";
-            const msg = urlParams.get('msg') || "";
-            const vip = urlParams.get('vip') || "0";
-            const receivedHash = urlParams.get('hash') || "";
-            
+            document.getElementById('nameDisplay').textContent = decode(nameB64);
+            document.getElementById('messageDisplay').textContent = decode(msgB64);
 
-            const SECRET_SALT = "MySuperSecret8March2026"; 
-            
-            const checkString = name + msg + vip + SECRET_SALT;
+            const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
             const calculatedHash = CryptoJS.MD5(checkString).toString();
-
             const watermark = document.getElementById('watermark');
 
             if (vip === '1' && calculatedHash === receivedHash) {
-
                 if (watermark) watermark.remove();
-                console.log("✅ Премиум подтвержден!");
             } else {
-
                 if (watermark) watermark.style.display = 'block';
-                console.log("❌ Премиум не подтвержден");
             }
+            run();
         };
     </script>
 </body>

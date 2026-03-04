@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>С 8 Марта!</title>
+    <title>С 8 Марта! ✨</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -16,22 +16,18 @@
         body {
             margin: 0; padding: 0; display: flex; justify-content: center;
             align-items: center; height: 100vh;
-            /* Фон с мягким свечением */
             background: radial-gradient(circle at center, #ffffff 0%, #ffe4e1 100%);
             font-family: 'Montserrat', sans-serif; 
             overflow: hidden; text-align: center;
         }
 
-        /* Премиальная карточка */
         .card {
             position: relative;
             background: rgba(255, 255, 255, 0.7);
             padding: 50px 40px;
             border-radius: 30px;
-            /* Эффект стекла */
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            /* Золотая тонкая рамка */
             border: 1px solid rgba(212, 175, 55, 0.3);
             box-shadow: 0 25px 50px rgba(0,0,0,0.08), 
                         inset 0 0 20px rgba(255,255,255,0.5);
@@ -46,7 +42,6 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* Декоративные золотые элементы */
         .card::before {
             content: ""; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
             border: 1px solid #d4af37; border-radius: 20px;
@@ -61,7 +56,6 @@
 
         #nameDisplay { 
             font-family: 'Playfair Display', serif;
-            /* Золотой текст */
             background: var(--gold);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -78,7 +72,6 @@
             white-space: pre-wrap;
         }
 
-        /* Улучшенные лепестки (Sakura Premium) */
         .petal {
             position: absolute; 
             background: linear-gradient(135deg, #ffcce0 0%, #ffb6c1 100%);
@@ -95,6 +88,12 @@
             90% { opacity: 0.4; }
             100% { transform: translateY(110vh) rotate(720deg) scale(1.2); opacity: 0; }
         }
+
+        #watermark {
+            position: fixed; bottom: 10px; right: 10px; 
+            font-family: sans-serif; font-size: 12px; 
+            color: rgba(0,0,0,0.3); z-index: 9999; display: none;
+        }
     </style>
 </head>
 <body>
@@ -105,56 +104,42 @@
         <p id="messageDisplay">Пусть ваша жизнь будет наполнена ароматом цветов, <br> искренними улыбками и нежностью. 🌸</p>
     </div>
 
+    <div id="watermark">Создано в @postcard_congrat_bot</div>
+    <audio id="bg-music" loop></audio>
+
 <script>
-    const params = new URLSearchParams(window.location.search);
-    const nameBase64 = params.get('name');
-    const msgBase64 = params.get('msg');
-    
-    const display = document.getElementById('nameDisplay');
-    const msgDisplay = document.getElementById('messageDisplay');
+    // --- Настройки ---
+    const SECRET_SALT = "MySuperSecret8March2026";
+    const MUSIC_MAP = {
+        "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+        "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+        "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+    };
 
+    // --- Параметры ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const nameB64 = urlParams.get('name') || "";
+    const msgB64 = urlParams.get('msg') || "";
+    const vip = urlParams.get('vip') || "0";
+    const musicId = urlParams.get('music') || "0";
+    const receivedHash = urlParams.get('hash') || "";
 
-	function decodeBase64(str) {
-		if (!str || str.trim() === "") return null;
-		try {
+    let musicStarted = false;
 
-			let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-			
-
-			while (base64.length % 4 !== 0) {
-				base64 += '=';
-			}
-
-
-			const binaryString = atob(base64);
-			const bytes = new Uint8Array(binaryString.length);
-			for (let i = 0; i < binaryString.length; i++) {
-				bytes[i] = binaryString.charCodeAt(i);
-			}
-			
-
-			return new TextDecoder("utf-8").decode(bytes);
-		} catch (e) {
-			console.error("Ошибка декодирования:", e);
-			return null;
-		}
-	}
-
-
-    const decodedName = decodeBase64(nameBase64);
-    if (decodedName) {
-        display.textContent = decodedName;
-    } else {
-        display.textContent = "Прекрасная Дама";
+    // --- Функции ---
+    function decodeBase64(str) {
+        if (!str || str.trim() === "") return null;
+        try {
+            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4 !== 0) base64 += '=';
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder("utf-8").decode(bytes);
+        } catch (e) { return null; }
     }
-
-
-    const decodedMsg = decodeBase64(msgBase64);
-    if (decodedMsg && decodedMsg.trim() !== "") {
-        msgDisplay.textContent = decodedMsg;
-    }
-
-
 
     function createPetal() {
         const petal = document.createElement('div');
@@ -168,40 +153,44 @@
         document.body.appendChild(petal);
         setTimeout(() => petal.remove(), 10000);
     }
-    setInterval(createPetal, 400);
+
+    function startMusic() {
+        if (!musicStarted && MUSIC_MAP[musicId]) {
+            const audio = document.getElementById('bg-music');
+            audio.src = MUSIC_MAP[musicId];
+            audio.play().catch(() => console.log("Нужно взаимодействие для звука"));
+            musicStarted = true;
+        }
+    }
+
+    // --- Инициализация при загрузке ---
+    window.onload = function() {
+        // 1. Проверка безопасности
+        const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
+        const calculatedHash = CryptoJS.MD5(checkString).toString();
+        const watermark = document.getElementById('watermark');
+
+        if (vip === '1' && calculatedHash === receivedHash) {
+            if (watermark) watermark.remove();
+            console.log("✅ Premium Active");
+        } else {
+            if (watermark) watermark.style.display = 'block';
+        }
+
+        // 2. Отображение текста
+        const decodedName = decodeBase64(nameB64);
+        document.getElementById('nameDisplay').textContent = decodedName || "Прекрасная Дама";
+        
+        const decodedMsg = decodeBase64(msgB64);
+        if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
+
+        // 3. Запуск анимации
+        setInterval(createPetal, 400);
+    };
+
+    // 4. Запуск музыки при первом клике/касании
+    document.body.addEventListener('click', startMusic, { once: true });
+    document.body.addEventListener('touchstart', startMusic, { once: true });
 </script>
-<div id="watermark" style="position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;">
-        Создано в @postcard_congrat_bot
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-    <script>
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const name = urlParams.get('name') || "";
-            const msg = urlParams.get('msg') || "";
-            const vip = urlParams.get('vip') || "0";
-            const receivedHash = urlParams.get('hash') || "";
-            
-
-            const SECRET_SALT = "MySuperSecret8March2026"; 
-            
-            const checkString = name + msg + vip + SECRET_SALT;
-            const calculatedHash = CryptoJS.MD5(checkString).toString();
-
-            const watermark = document.getElementById('watermark');
-
-            if (vip === '1' && calculatedHash === receivedHash) {
-
-                if (watermark) watermark.remove();
-                console.log("✅ Премиум подтвержден!");
-            } else {
-
-                if (watermark) watermark.style.display = 'block';
-                console.log("❌ Премиум не подтвержден");
-            }
-        };
-    </script>
 </body>
 </html>

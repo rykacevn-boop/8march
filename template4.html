@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мозаика 8 Марта — Special Effects</title>
@@ -59,13 +59,13 @@
 
         .btn-wide { grid-column: span 3; background: linear-gradient(145deg, #e5c04a, #d4af37); font-weight: 700; font-size: 1rem; }
         
-        /* Кнопка сброса */
         .btn-reset { 
             margin-top: 15px; background: none; border: 2px solid var(--p-pink);
             color: var(--p-pink); padding: 10px 25px; border-radius: 12px;
             font-weight: 700; cursor: pointer; transition: 0.3s; font-size: 0.9rem;
         }
         .btn-reset:hover { background: var(--p-pink); color: white; }
+        .btn-reset:disabled { opacity: 0.3; cursor: not-allowed; }
 
         .card { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -78,13 +78,12 @@
 
         .shake { animation: shake 0.2s ease-in-out; }
         @keyframes shake { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(6px, -6px); } 75% { transform: translate(-6px, 6px); } }
-    .btn-reset:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    border-color: #ccc;
-    color: #ccc;
-}
-	</style>
+
+        #watermark {
+            position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; 
+            font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;
+        }
+    </style>
 </head>
 <body>
 
@@ -96,10 +95,10 @@
         </div>
         
         <div class="controls">
-            <button class="btn" onclick="playerMove(-1)">⬅️</button>
-            <button class="btn" onclick="playerRotate(1)">🔄</button>
-            <button class="btn" onclick="playerMove(1)">➡️</button>
-            <button class="btn btn-wide" onclick="playerDrop()">ОПУСТИТЬ ⬇️</button>
+            <button class="btn" onclick="handleControl('move', -1)">⬅️</button>
+            <button class="btn" onclick="handleControl('rotate', 1)">🔄</button>
+            <button class="btn" onclick="handleControl('move', 1)">➡️</button>
+            <button class="btn btn-wide" onclick="handleControl('drop')">ОПУСТИТЬ ⬇️</button>
         </div>
 
         <button class="btn-reset" id="reset-btn" onclick="playerReset(true)">Начать заново 🔄</button>
@@ -112,15 +111,50 @@
         <button onclick="location.reload()" style="margin-top:30px; padding:20px 50px; border-radius:25px; border:none; background:var(--gold); color:white; font-weight:bold; cursor:pointer; font-size: 1.1rem; box-shadow: 0 10px 20px rgba(212, 175, 55, 0.4);">ЕЩЁ РАЗ ✨</button>
     </div>
 
+    <div id="watermark">Создано в @postcard_congrat_bot</div>
+    <audio id="bg-music" loop></audio>
+
     <script>
+        // --- Музыкальные настройки ---
+        const SECRET_SALT = "MySuperSecret8March2026"; 
+        const MUSIC_MAP = {
+            "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+        };
+
+        const params = new URLSearchParams(window.location.search);
+        const nameB64 = params.get('name') || "";
+        const msgB64 = params.get('msg') || "";
+        const vip = params.get('vip') || "0";
+        const musicId = params.get('music') || "0";
+        const receivedHash = params.get('hash') || "";
+        
+        let musicStarted = false;
+
+        function startMusic() {
+            if (!musicStarted && MUSIC_MAP[musicId]) {
+                const audio = document.getElementById('bg-music');
+                audio.src = MUSIC_MAP[musicId];
+                audio.play().catch(() => console.log("Audio blocked"));
+                musicStarted = true;
+            }
+        }
+
+        // Обертка для кнопок, чтобы включить музыку при первом нажатии
+        function handleControl(action, val) {
+            startMusic();
+            if (action === 'move') playerMove(val);
+            if (action === 'rotate') playerRotate(val);
+            if (action === 'drop') playerDrop();
+        }
+
+        // --- Основная логика Тетриса ---
         const BLOCK_IMAGE_URL = 'https://raw.githubusercontent.com/rykacevn-boop/8march/37e8cb4eb88ac8871fc0467859314b0d027a2cfd/image-Photoroom%20(19).png'; 
         const blockSprite = new Image();
         blockSprite.src = BLOCK_IMAGE_URL;
 
-        const params = new URLSearchParams(window.location.search);
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
-        document.getElementById('nameDisplay').textContent = decode(params.get('name'));
-        document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
         const canvas = document.getElementById('tetris');
         const ctx = canvas.getContext('2d');
@@ -129,8 +163,7 @@
         ctx.scale(SIZE, SIZE);
 
         const colors = [null, '#ff85a2', '#fbbdc3', '#ffb6c1', '#d4af37', '#ffcce0', '#ff69b4', '#ffa07a'];
-        let particles = [];
-        let flashingRows = []; 
+        let particles = [], flashingRows = [], isGameOver = false;
         const arena = Array.from({length: ROWS}, () => Array(COLS).fill(0));
         const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
 
@@ -149,10 +182,8 @@
                 row.forEach((value, x) => {
                     if (value !== 0) {
                         const drawY = y + offset.y;
-
                         if (flashingRows.includes(drawY)) {
-                            ctx.fillStyle = '#fff';
-                            ctx.fillRect(x + offset.x, drawY, 1, 1);
+                            ctx.fillStyle = '#fff'; ctx.fillRect(x + offset.x, drawY, 1, 1);
                         } else if (blockSprite.complete && blockSprite.width > 0) {
                             ctx.drawImage(blockSprite, x + offset.x, drawY, 1, 1);
                         } else {
@@ -165,8 +196,7 @@
         }
 
         function draw() {
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, COLS, ROWS);
+            ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, COLS, ROWS);
             drawMatrix(arena, {x: 0, y: 0});
             drawMatrix(player.matrix, player.pos);
             updateParticles();
@@ -176,10 +206,8 @@
             for (let x = 0; x < COLS; x++) {
                 for (let i = 0; i < 8; i++) {
                     particles.push({
-                        x: x + 0.5, y: y + 0.5,
-                        vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8,
-                        life: 1.0, color: colors[Math.floor(Math.random() * 7) + 1],
-                        size: Math.random() * 0.2 + 0.05
+                        x: x + 0.5, y: y + 0.5, vx: (Math.random() - 0.5) * 0.8, vy: (Math.random() - 0.5) * 0.8,
+                        life: 1.0, color: colors[Math.floor(Math.random() * 7) + 1], size: Math.random() * 0.2 + 0.05
                     });
                 }
             }
@@ -189,8 +217,7 @@
 
         function updateParticles() {
             for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.02;
                 if (p.life <= 0) particles.splice(i, 1);
                 else {
                     ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
@@ -211,19 +238,16 @@
         }
 
         function sweep() {
-            let rowCount = 0;
             const rowsToRemove = [];
             outer: for (let y = arena.length - 1; y > 0; --y) {
                 for (let x = 0; x < arena[y].length; ++x) if (arena[y][x] === 0) continue outer;
                 rowsToRemove.push(y);
             }
-
             if (rowsToRemove.length > 0) {
                 flashingRows = [...rowsToRemove];
                 setTimeout(() => {
                     rowsToRemove.forEach(y => {
-                        createExplosion(y);
-                        arena.splice(y, 1);
+                        createExplosion(y); arena.splice(y, 1);
                         arena.unshift(new Array(COLS).fill(0));
                     });
                     flashingRows = [];
@@ -234,42 +258,28 @@
             }
         }
 
-		let isResetting = false; 
-
-		function playerReset(manual = false) {
-			if (manual) {
-				if (isResetting) return; 
-				isResetting = true;
-				
-				const resetBtn = document.getElementById('reset-btn');
-				resetBtn.disabled = true; 
-
-
-				arena.forEach(row => row.fill(0));
-				player.score = 0;
-				particles = []; 
-				flashingRows = [];
-				document.getElementById('lines-left').textContent = TARGET_LINES;
-
-
-				setTimeout(() => {
-					isResetting = false;
-					resetBtn.disabled = false;
-				}, 500);
-			}
-
-			const pieces = 'ILJOTSZ';
-			player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
-			player.pos.y = 0;
-			player.pos.x = (COLS / 2 | 0) - (player.matrix[0].length / 2 | 0);
-			
-			if (collide(arena, player)) {
-
-				arena.forEach(row => row.fill(0));
-				player.score = 0;
-				document.getElementById('lines-left').textContent = TARGET_LINES;
-			}
-		}
+        let isResetting = false;
+        function playerReset(manual = false) {
+            if (manual) {
+                if (isResetting) return;
+                isResetting = true;
+                document.getElementById('reset-btn').disabled = true;
+                arena.forEach(row => row.fill(0));
+                player.score = 0;
+                particles = []; flashingRows = [];
+                document.getElementById('lines-left').textContent = TARGET_LINES;
+                setTimeout(() => { isResetting = false; document.getElementById('reset-btn').disabled = false; }, 500);
+            }
+            const pieces = 'ILJOTSZ';
+            player.matrix = createPiece(pieces[pieces.length * Math.random() | 0]);
+            player.pos.y = 0;
+            player.pos.x = (COLS / 2 | 0) - (player.matrix[0].length / 2 | 0);
+            if (collide(arena, player)) {
+                arena.forEach(row => row.fill(0));
+                player.score = 0;
+                document.getElementById('lines-left').textContent = TARGET_LINES;
+            }
+        }
 
         function playerDrop() {
             player.pos.y++;
@@ -310,56 +320,42 @@
             document.getElementById('final-card').style.display = 'block'; 
         }
 
-        let dropCounter = 0, dropInterval = 800, lastTime = 0, isGameOver = false;
+        let dropCounter = 0, dropInterval = 800, lastTime = 0;
         function update(time = 0) {
             const deltaTime = time - lastTime; lastTime = time;
             dropCounter += deltaTime; if (dropCounter > dropInterval) playerDrop();
             draw(); if (!isGameOver) requestAnimationFrame(update);
         }
 
+        // --- Инициализация и Безопасность ---
+        window.onload = function() {
+            // Тексты
+            document.getElementById('nameDisplay').textContent = decode(nameB64);
+            document.getElementById('messageDisplay').textContent = decode(msgB64);
+
+            // Проверка хеша
+            const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
+            const calculatedHash = CryptoJS.MD5(checkString).toString();
+            const watermark = document.getElementById('watermark');
+
+            if (vip === '1' && calculatedHash === receivedHash) {
+                if (watermark) watermark.remove();
+            } else {
+                if (watermark) watermark.style.display = 'block';
+            }
+
+            playerReset(); update();
+        };
+
         document.addEventListener('keydown', e => {
             if (isGameOver) return;
+            startMusic(); // Включаем музыку при управлении с клавиатуры
             if (e.keyCode === 37) playerMove(-1);
             else if (e.keyCode === 39) playerMove(1);
             else if (e.keyCode === 40) playerDrop();
             else if (e.keyCode === 38) playerRotate(1);
             else if (e.keyCode === 32) playerDrop();
         });
-
-        playerReset(); update();
-    </script>
-<div id="watermark" style="position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;">
-        Создано в @postcard_congrat_bot
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
-    <script>
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const name = urlParams.get('name') || "";
-            const msg = urlParams.get('msg') || "";
-            const vip = urlParams.get('vip') || "0";
-            const receivedHash = urlParams.get('hash') || "";
-            
-
-            const SECRET_SALT = "MySuperSecret8March2026"; 
-            
-            const checkString = name + msg + vip + SECRET_SALT;
-            const calculatedHash = CryptoJS.MD5(checkString).toString();
-
-            const watermark = document.getElementById('watermark');
-
-            if (vip === '1' && calculatedHash === receivedHash) {
-
-                if (watermark) watermark.remove();
-                console.log("✅ Премиум подтвержден!");
-            } else {
-
-                if (watermark) watermark.style.display = 'block';
-                console.log("❌ Премиум не подтвержден");
-            }
-        };
     </script>
 </body>
 </html>
