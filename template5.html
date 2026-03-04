@@ -104,20 +104,36 @@
         const ground = Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true });
         Composite.add(engine.world, [bee, flower, ground]);
 
-        function resetLevel() {
-            if (animationId) cancelAnimationFrame(animationId);
-            isDone = false; isDrawing = false;
-            document.getElementById('final-card').style.display = 'none';
-            const bodies = Composite.allBodies(engine.world);
-            bodies.forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
-            Body.setStatic(bee, true);
-            Body.setPosition(bee, { x: 70, y: 100 });
-            Body.setVelocity(bee, { x: 0, y: 0 });
-            Body.setAngle(bee, 0);
-            ink = maxInk;
-            document.getElementById('ink-progress').style.width = '100%';
-            run();
-        }
+		function resetLevel() {
+			// 1. Останавливаем старую анимацию
+			if (animationId) cancelAnimationFrame(animationId);
+			
+			isDone = false;
+			isDrawing = false;
+			document.getElementById('final-card').style.display = 'none';
+
+			// 2. Удаляем только нарисованные линии
+			const bodies = Composite.allBodies(engine.world);
+			bodies.forEach(b => { 
+				if(b.label === 'line') Composite.remove(engine.world, b); 
+			});
+
+			// 3. ПОЛНЫЙ СБРОС ПЧЕЛЫ
+			Body.setStatic(bee, true); // Замораживаем
+			Body.setPosition(bee, { x: 70, y: 100 }); // Возвращаем в старт
+			Body.setVelocity(bee, { x: 0, y: 0 }); // Обнуляем скорость
+			Body.setAngularVelocity(bee, 0); // Обнуляем вращение
+			Body.setAngle(bee, 0); // Выравниваем
+			bee.force = { x: 0, y: 0 }; // Убираем накопленные силы
+			bee.torque = 0; // Убираем крутящий момент
+
+			// 4. Сброс UI
+			ink = maxInk;
+			document.getElementById('ink-progress').style.width = '100%';
+
+			// 5. Перезапуск цикла
+			run();
+		}
 
         function run() {
             if (isDone) return; 
@@ -158,12 +174,18 @@
             return { x: clientX - rect.left, y: clientY - rect.top };
         }
 
-        const startDraw = (e) => {
-            if (isDone) return;
-            isDrawing = true; lastPos = getPos(e);
-            if (bee.isStatic) Body.setStatic(bee, false);
-            if(e.cancelable) e.preventDefault();
-        };
+		const startDraw = (e) => {
+			if (isDone) return;
+			isDrawing = true; 
+			lastPos = getPos(e);
+			
+			// Активируем физику пчелы только если она еще стоит
+			if (bee.isStatic) {
+				Body.setStatic(bee, false);
+			}
+			
+			if(e.cancelable) e.preventDefault();
+		};
 
         const draw = (e) => {
             if (!isDrawing || ink <= 0 || isDone) return;
