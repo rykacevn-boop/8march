@@ -9,90 +9,106 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
     <style>
-        :root {
-            --gold-gradient: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
-            --rose-gold: linear-gradient(135deg, #e5b2ca 0%, #f9e3ef 45%, #d4a3b9 100%);
-			--bg-gradient: ...; --card-bg: white;
-        }		
+:root {
+    /* СТАНДАРТНАЯ ТЕМА (vip=0) */
+    --bg-gradient: radial-gradient(circle at center, #ffffff 0%, #fdf0f5 100%);
+    --card-bg: white;
+    --text-h1: #4a4a4a;
+    --text-msg: #6d6d6d;
+    --border-inner: #f3e5ab;
+    --gold-text: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
+    --hint-color: #ad1457;
+    
+    /* Цвета для холста (Розовый металл) */
+    --scratch-start: #e5b2ca;
+    --scratch-mid: #d4a3b9;
+    --scratch-end: #b5839a;
+}
 
+/* ПРЕМИУМ ТЕМА (vip=1) */
+[data-vip="1"] {
+    --bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+    --card-bg: #141414;
+    --text-h1: #ffffff;
+    --text-msg: #e0e0e0;
+    --border-inner: rgba(212, 175, 55, 0.4);
+    --hint-color: #d4af37;
 
-        body {
-            margin: 0; padding: 0; height: 100vh;
-            background: radial-gradient(circle at center, #ffffff 0%, #fdf0f5 100%);
-            font-family: 'Montserrat', sans-serif;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; touch-action: none;
-        }
+    /* Цвета для холста (Золото) */
+    --scratch-start: #bf953f;
+    --scratch-mid: #fcf6ba;
+    --scratch-end: #aa8954;
+}
 
-        .container { position: relative; width: 330px; height: 480px; }
+body {
+    margin: 0; padding: 0; height: 100vh;
+    background: var(--bg-gradient);
+    font-family: 'Montserrat', sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    overflow: hidden; touch-action: none;
+    transition: background 0.5s ease;
+}
 
-        .card-content {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: white; border-radius: 25px;
-            display: flex; flex-direction: column; justify-content: center;
-            align-items: center; text-align: center; padding: 35px;
-            box-sizing: border-box; z-index: 1;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.07);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-        }
+.container { position: relative; width: 330px; height: 480px; }
 
-        .card-content::after {
-            content: ''; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
-            border: 1px solid #f3e5ab; border-radius: 18px; pointer-events: none;
-        }
+.card-content {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--card-bg); border-radius: 25px;
+    display: flex; flex-direction: column; justify-content: center;
+    align-items: center; text-align: center; padding: 35px;
+    box-sizing: border-box; z-index: 1;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    transition: all 0.5s ease;
+}
 
-        #scratch-canvas {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            border-radius: 25px; cursor: crosshair;
-            z-index: 2; touch-action: none;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        }
+.card-content::after {
+    content: ''; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
+    border: 1px solid var(--border-inner); border-radius: 18px; pointer-events: none;
+}
 
-        h1 { 
-            font-family: 'Playfair Display', serif;
-            color: #4a4a4a; font-size: 1.8rem; margin: 0 0 10px 0; 
-        }
+#scratch-canvas {
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 100%;
+    border-radius: 25px; cursor: crosshair;
+    z-index: 2; touch-action: none;
+}
 
-        #nameDisplay { 
-            font-family: 'Playfair Display', serif;
-            background: var(--gold-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 2rem; font-weight: 700; margin-bottom: 20px; 
-        }
-        
-        #messageDisplay { 
-            color: #6d6d6d; font-size: 1.05rem; line-height: 1.6; font-weight: 300;
-            white-space: pre-wrap;
-        }
+h1 { 
+    font-family: 'Playfair Display', serif;
+    color: var(--text-h1); font-size: 1.8rem; margin: 0 0 10px 0; 
+}
 
-        .hint { 
-            position: absolute; bottom: -50px; color: #ad1457; width: 100%; 
-            text-align: center; font-size: 0.85rem; font-weight: 600;
-            letter-spacing: 1px; text-transform: uppercase;
-            animation: pulse 2s infinite;
-        }
+#nameDisplay { 
+    font-family: 'Playfair Display', serif;
+    background: var(--gold-text);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-size: 2rem; font-weight: 700; margin-bottom: 20px; 
+}
 
-        @keyframes pulse {
-            0%, 100% { opacity: 0.5; transform: scale(1); }
-            50% { opacity: 1; transform: scale(1.05); }
-        }
+#messageDisplay { 
+    color: var(--text-msg); font-size: 1.05rem; line-height: 1.6; font-weight: 300;
+    white-space: pre-wrap;
+}
 
-        #watermark {
-            position: fixed; bottom: 10px; right: 10px; 
-            font-family: sans-serif; font-size: 12px; 
-            color: rgba(0,0,0,0.3); z-index: 9999; 
-            display: none;
-        }
+.hint { 
+    position: absolute; bottom: -50px; color: var(--hint-color); width: 100%; 
+    text-align: center; font-size: 0.85rem; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase;
+    animation: pulse 2s infinite;
+}
 
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+}
 
-		/* При наличии атрибута data-vip="1" — премиум инверсия */
-		[data-vip="1"] {
-			--bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-			--card-bg: #141414;
-			--text-h1: #ffffff;
-		}
+#watermark {
+    position: fixed; bottom: 10px; right: 10px; 
+    font-family: sans-serif; font-size: 11px; 
+    color: rgba(128,128,128,0.4); z-index: 9999; 
+}
     </style>
 </head>
 <body>
@@ -127,9 +143,18 @@
     const msgBase64 = params.get('msg') || "";
     const vipParam = params.get('vip') || "0";
     const musicId = params.get('music') || "0";
+    // Тема для хеша: если VIP, используем dark, иначе light
+    const theme = (vipParam === '1') ? "dark" : "light"; 
     const receivedHash = params.get('hash') || "";
 
+    // Хеш: должен совпадать с логикой в Python
+    const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
+    const calculatedHash = CryptoJS.MD5(checkString).toString();
+
     let musicStarted = false;
+    const canvas = document.getElementById('scratch-canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    let isDrawing = false;
 
     function decodeBase64(str) {
         if (!str || str.trim() === "") return null;
@@ -142,106 +167,94 @@
                 bytes[i] = binaryString.charCodeAt(i);
             }
             return new TextDecoder("utf-8").decode(bytes);
-        } catch (e) {
-            return null;
-        }
+        } catch (e) { return null; }
     }
 
-    // --- ЛОГИКА ХОЛСТА (SCRATCH) ---
-    const canvas = document.getElementById('scratch-canvas');
-    const ctx = canvas.getContext('2d');
-    let isDrawing = false;
-
+    // --- ДИНАМИЧЕСКИЙ ХОЛСТ (Цвета зависят от темы) ---
     function initCanvas() {
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         
+        // Считываем текущие цвета из CSS переменных
+        const style = getComputedStyle(document.documentElement);
+        const c1 = style.getPropertyValue('--scratch-start').trim();
+        const c2 = style.getPropertyValue('--scratch-mid').trim();
+        const c3 = style.getPropertyValue('--scratch-end').trim();
+        
         const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        grad.addColorStop(0, '#e5b2ca');
-        grad.addColorStop(0.5, '#d4a3b9');
-        grad.addColorStop(1, '#b5839a');
+        grad.addColorStop(0, c1 || '#bf953f'); 
+        grad.addColorStop(0.5, c2 || '#fcf6ba'); 
+        grad.addColorStop(1, c3 || '#aa8954'); 
         
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        for(let i=0; i<800; i++) {
-            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(255,255,255,0.4)' : 'rgba(212,175,55,0.2)';
-            ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.5, 1.5);
+        // Эффект искр (золотые для VIP, светлые для обычных)
+        for(let i=0; i<850; i++) {
+            ctx.fillStyle = (vipParam === '1') 
+                ? (Math.random() > 0.4 ? 'rgba(255, 246, 186, 0.4)' : 'rgba(212, 175, 55, 0.2)')
+                : (Math.random() > 0.5 ? 'rgba(255, 255, 255, 0.4)' : 'rgba(212, 175, 55, 0.1)');
+            ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.4, 1.4);
         }
         
-        ctx.fillStyle = "rgba(74, 74, 74, 0.6)";
+        ctx.fillStyle = (vipParam === '1') ? "rgba(0, 0, 0, 0.6)" : "rgba(74, 74, 74, 0.6)"; 
         ctx.font = "600 14px Montserrat";
         ctx.textAlign = "center";
         ctx.fillText("SCRATCH FOR SURPRISE", canvas.width/2, canvas.height/2);
     }
 
+    // --- ОСТАЛЬНАЯ ЛОГИКА ---
     function startMusic() {
         if (!musicStarted && MUSIC_MAP[musicId]) {
             const audio = document.getElementById('bg-music');
             audio.src = MUSIC_MAP[musicId];
-            audio.play().catch(e => console.log("Sound blocked"));
+            audio.play().catch(e => {});
             musicStarted = true;
         }
     }
 
     function scratch(e) {
         if (!isDrawing) return;
-        
-        // Запуск музыки при первом взаимодействии
         startMusic();
-
         const rect = canvas.getBoundingClientRect();
         const clientX = e.clientX || (e.touches && e.touches[0].clientX);
         const clientY = e.clientY || (e.touches && e.touches[0].clientY);
-        const x = clientX - rect.left;
-        const y = clientY - rect.top;
-
         ctx.globalCompositeOperation = 'destination-out';
         ctx.beginPath();
-        ctx.arc(x, y, 35, 0, Math.PI * 2);
+        ctx.arc(clientX - rect.left, clientY - rect.top, 35, 0, Math.PI * 2);
         ctx.fill();
         checkScratchProgress();
     }
 
     function checkScratchProgress() {
-        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        const pixels = imageData.data;
-        let clearPixels = 0;
-        for (let i = 3; i < pixels.length; i += 4) {
-            if (pixels[i] === 0) clearPixels++;
-        }
-        if (clearPixels / (pixels.length / 4) > 0.5) {
-            canvas.style.transition = 'all 1s ease-out';
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let cleared = 0;
+        for (let i = 3; i < pixels.length; i += 4) { if (pixels[i] === 0) cleared++; }
+        if (cleared / (pixels.length / 4) > 0.5) {
+            canvas.style.transition = 'opacity 1s';
             canvas.style.opacity = '0';
             setTimeout(() => canvas.remove(), 1000);
         }
     }
 
     window.onload = function() {
-        // 1. Проверка Premium (Хеш включает musicId)
-        const checkString = nameBase64 + msgBase64 + vipParam + musicId + SECRET_SALT;
-        const calculatedHash = CryptoJS.MD5(checkString).toString();
         const watermark = document.getElementById('watermark');
 
-        if (vipParam === '1' && calculatedHash === receivedHash) {
+        // УСЛОВИЕ ПЕРЕКЛЮЧЕНИЯ ОФОРМЛЕНИЯ
+        if (calculatedHash === receivedHash && vipParam === '1') {
+            // Активируем черную тему через атрибут, который мы прописали в CSS
+            document.documentElement.setAttribute('data-vip', '1');
             if (watermark) watermark.remove(); 
         } else {
+            // Если не VIP или хеш неверный — сбрасываем атрибут (белая тема)
+            document.documentElement.removeAttribute('data-vip');
             if (watermark) watermark.style.display = 'block';
         }
 
-        // 2. Отображение текста
-        const nameDisplay = document.getElementById('nameDisplay');
-        const msgDisplay = document.getElementById('messageDisplay');
-        
-        const decodedName = decodeBase64(nameBase64);
-        nameDisplay.textContent = (decodedName || "Прекрасная Дама");
-
+        document.getElementById('nameDisplay').textContent = decodeBase64(nameBase64) || "Прекрасная Дама";
         const decodedMsg = decodeBase64(msgBase64);
-        if (decodedMsg && decodedMsg.trim() !== "") {
-            msgDisplay.textContent = decodedMsg;
-        }
+        if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
 
-        // 3. Инициализация стирального слоя
         initCanvas();
     };
 
@@ -251,7 +264,6 @@
     window.addEventListener('touchend', () => isDrawing = false);
     canvas.addEventListener('mousemove', scratch);
     canvas.addEventListener('touchmove', (e) => { e.preventDefault(); scratch(e); }, {passive: false});
-
 </script>
 </body>
 </html>
