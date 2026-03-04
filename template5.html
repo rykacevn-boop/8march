@@ -2,323 +2,111 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Физическая головоломка к 8 Марта!</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Пчелка: Физика</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        :root {
-            --primary-pink: #ff85a2;
-            --secondary-pink: #fbbdc3;
-            --gold: #d4af37;
-            --bg: #fff5f8;
-            --text: #4a4a4a;
-        }
-
-        body {
-            margin: 0; padding: 0; display: flex; flex-direction: column;
-            justify-content: center; align-items: center; height: 100vh;
-            background: radial-gradient(circle at center, #ffffff 0%, #ffe4e1 100%);
-            font-family: 'Montserrat', sans-serif; text-align: center; color: var(--text);
-            overflow: hidden;
-        }
-
-        #game-container {
-            position: relative; width: 320px; height: 480px;
-            background: rgba(255, 255, 255, 0.6); border-radius: 20px;
-            backdrop-filter: blur(10px); border: 1px solid rgba(212, 175, 55, 0.3);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        #physics-canvas {
-            display: block; width: 100%; height: 100%;
-            background: transparent; z-index: 2;
-        }
-
-        /* Элементы игры */
-        .game-element { position: absolute; background-size: contain; background-repeat: no-repeat; background-position: center; z-index: 1; }
-        #bee { width: 40px; height: 40px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" x="10" font-size="80">🐝</text></svg>'); }
-        #flower { width: 60px; height: 60px; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="80" x="10" font-size="80">🌸</text></svg>'); }
-
-        /* Финальная открытка (скрыта) */
-        .card {
-            display: none; position: relative; width: 85%; max-width: 400px;
-            background: rgba(255, 255, 255, 0.7); padding: 50px 40px; border-radius: 30px;
-            backdrop-filter: blur(15px); border: 1px solid rgba(212, 175, 55, 0.3);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.08); z-index: 10;
-            animation: cardEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes cardEntrance {
-            from { opacity: 0; transform: scale(0.9) translateY(30px); }
-            to { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
-        h1 { font-family: 'Playfair Display', serif; color: var(--text); font-size: 2rem; margin: 0 0 15px 0; }
-        #nameDisplay { color: var(--primary-pink); font-size: 2.8rem; font-weight: 700; display: block; margin-bottom: 20px; }
-        #messageDisplay { font-size: 1.1rem; line-height: 1.8; white-space: pre-wrap; }
-
+        body { margin: 0; background: #fff5f8; overflow: hidden; font-family: sans-serif; touch-action: none; }
+        #canvas-container { position: relative; width: 100vw; height: 100vh; }
+        canvas { display: block; touch-action: none; -webkit-user-select: none; }
+        .ui { position: absolute; top: 20px; width: 100%; text-align: center; pointer-events: none; }
+        .ink-bar { width: 200px; height: 10px; background: #ddd; margin: 10px auto; border-radius: 5px; overflow: hidden; }
+        #ink-progress { width: 100%; height: 100%; background: #ff85a2; transition: width 0.2s; }
+        .card { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 20px; width: 80%; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2); z-index: 100; }
     </style>
 </head>
 <body>
-
-    <div id="game-container">
-        <canvas id="physics-canvas"></canvas>
+    <div id="canvas-container">
+        <div class="ui">
+            <div style="color: #ff85a2; font-weight: bold;">РИСУЙ ПУТЬ ПАЛЬЦЕМ ✍️</div>
+            <div class="ink-bar"><div id="ink-progress"></div></div>
+        </div>
+        <canvas id="game"></canvas>
     </div>
 
     <div class="card" id="final-card">
-        <h1>С праздником,</h1>
-        <span id="nameDisplay">Леди</span>
-        <p id="messageDisplay">Пусть в вашей жизни всегда находится верный путь к счастью и любви! 💖</p>
+        <h2 id="nameDisplay"></h2>
+        <p id="messageDisplay"></p>
+        <button onclick="location.reload()" style="padding: 10px 20px; border: none; background: #ff85a2; color: white; border-radius: 5px;">Еще раз</button>
     </div>
 
     <script>
-        // --- ДЕКОДИРОВАНИЕ ДАННЫХ ---
         const params = new URLSearchParams(window.location.search);
-        const nameBase64 = params.get('name');
-        const msgBase64 = params.get('msg');
+        function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return ""; } }
+        document.getElementById('nameDisplay').textContent = "С 8 Марта, " + decode(params.get('name')) + "!";
+        document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
-        function decodeBase64(str) {
-            if (!str) return null;
-            try {
-                let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-                while (base64.length % 4 !== 0) base64 += '=';
-                const binaryString = atob(base64);
-                const bytes = new Uint8Array(binaryString.length);
-                for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
-                return new TextDecoder("utf-8").decode(bytes);
-            } catch (e) { return null; }
-        }
-
-        const decodedName = decodeBase64(nameBase64);
-        const decodedMsg = decodeBase64(msgBase64);
-
-        if (decodedName) document.getElementById('nameDisplay').textContent = decodedName;
-        if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
-
-        // --- ЛОГИКА ИГРЫ (ФИЗИКА) ---
-        const canvas = document.getElementById('physics-canvas');
-        const ctx = canvas.getContext('2d');
-        const container = document.getElementById('game-container');
-        const width = 320;
-        const height = 480;
-
-        canvas.width = width;
-        canvas.height = height;
-
-        // Инициализация Matter.js
-        const { Engine, Render, Runner, Bodies, Composite, Events, Mouse, MouseConstraint } = Matter;
+        const { Engine, Render, Runner, Bodies, Composite, Events } = Matter;
         const engine = Engine.create();
-        const world = engine.world;
+        const canvas = document.getElementById('game');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        // Отключаем гравитацию для пчелки изначально
-        engine.world.gravity.y = 0.5;
-
-        // Создаем границы
-        const ground = Bodies.rectangle(width/2, height + 10, width, 20, { isStatic: true });
-        const wallL = Bodies.rectangle(-10, height/2, 20, height, { isStatic: true });
-        const wallR = Bodies.rectangle(width + 10, height/2, 20, height, { isStatic: true });
-        Composite.add(world, [ground, wallL, wallR]);
-
-        // Создаем пчелку (🐝) - динамическое тело
-        const beeBody = Bodies.circle(50, 50, 20, { 
-            render: { fillStyle: 'transparent' }, 
-            label: 'bee',
-            frictionAir: 0.02,
-            restitution: 0.6 
-        });
-
-        // Создаем цветок (🌸) - статическое тело
-        const flowerBody = Bodies.circle(width - 60, height - 60, 30, { 
-            isStatic: true, 
-            render: { fillStyle: 'transparent' }, 
-            label: 'flower' 
-        });
-
-        Composite.add(world, [beeBody, flowerBody]);
-
-        // Создаем препятствия
-        const obstacle1 = Bodies.rectangle(width/2, height/2 - 50, 150, 20, { isStatic: true, render: { fillStyle: '#d4af37' } });
-        const obstacle2 = Bodies.rectangle(width/4, height/2 + 50, 100, 20, { isStatic: true, render: { fillStyle: '#d4af37' } });
-        const obstacle3 = Bodies.rectangle(3*width/4, height/2 + 100, 100, 20, { isStatic: true, render: { fillStyle: '#d4af37' } });
-        Composite.add(world, [obstacle1, obstacle2, obstacle3]);
+        // Элементы
+        const bee = Bodies.circle(50, 80, 20, { restitution: 0.5, label: 'bee' });
+        const flower = Bodies.circle(canvas.width - 60, canvas.height - 80, 30, { isStatic: true, label: 'flower' });
+        const ground = Bodies.rectangle(canvas.width/2, canvas.height + 25, canvas.width, 50, { isStatic: true });
+        Composite.add(engine.world, [bee, flower, ground]);
 
         // Отрисовка
-        (function render() {
+        const ctx = canvas.getContext('2d');
+        (function update() {
             Engine.update(engine);
-
-            ctx.clearRect(0, 0, width, height);
-
-            // Отрисовка тел Matter.js
-            const bodies = Composite.allBodies(world);
-            ctx.beginPath();
-            for (let i = 0; i < bodies.length; i += 1) {
-                const part = bodies[i];
-                if (part.render.visible) {
-                    const vertices = part.vertices;
-                    ctx.moveTo(vertices[0].x, vertices[0].y);
-                    for (let j = 1; j < vertices.length; j += 1) {
-                        ctx.lineTo(vertices[j].x, vertices[j].y);
-                    }
-                    ctx.lineTo(vertices[0].x, vertices[0].y);
-                    if (part.render.fillStyle && part.render.fillStyle !== 'transparent') {
-                        ctx.fillStyle = part.render.fillStyle;
-                        ctx.fill();
-                    }
-                    if (part.render.strokeStyle) {
-                        ctx.lineWidth = part.render.lineWidth || 1;
-                        ctx.strokeStyle = part.render.strokeStyle;
-                        ctx.stroke();
-                    }
-                }
-            }
-            ctx.lineWidth = 1; ctx.strokeStyle = '#fff'; ctx.stroke(); ctx.closePath();
-
-            // Отрисовка эмодзи поверх тел
-            ctx.font = '40px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('🐝', beeBody.position.x, beeBody.position.y);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            ctx.font = '60px serif';
-            ctx.fillText('🌸', flowerBody.position.x, flowerBody.position.y);
-
-            // Отрисовка линии, которую рисует пользователь
-            if (isDrawing && currentLine.length > 1) {
+            // Отрисовка тел
+            Composite.allBodies(engine.world).forEach(body => {
                 ctx.beginPath();
-                ctx.moveTo(currentLine[0].x, currentLine[0].y);
-                for (let i = 1; i < currentLine.length; i++) {
-                    ctx.lineTo(currentLine[i].x, currentLine[i].y);
-                }
-                ctx.lineWidth = 5;
-                ctx.strokeStyle = '#ff85a2'; // Цвет линии
-                ctx.stroke();
+                body.vertices.forEach((v, i) => ctx.lineTo(v.x, v.y));
                 ctx.closePath();
-            }
+                ctx.fillStyle = body.label === 'line' ? '#ff85a2' : (body.isStatic ? '#d4af37' : 'transparent');
+                ctx.fill();
+            });
 
-            requestAnimationFrame(render);
+            // Эмодзи
+            ctx.font = '40px Arial';
+            ctx.fillText('🐝', bee.position.x - 20, bee.position.y + 15);
+            ctx.font = '60px Arial';
+            ctx.fillText('🌸', flower.position.x - 30, flower.position.y + 25);
+
+            if (!isDone) requestAnimationFrame(update);
         })();
 
-        // Логика рисования
-        let isDrawing = false;
-        let currentLine = [];
-        let inkLimit = 300; // Лимит чернил
-        let inkUsed = 0;
-
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('touchstart', (e) => startDrawing(e.touches[0]));
-
-        window.addEventListener('mouseup', endDrawing);
-        window.addEventListener('touchend', endDrawing);
-
-        canvas.addEventListener('mousemove', drawLine);
-        canvas.addEventListener('touchmove', (e) => drawLine(e.touches[0]));
-
-        function getMousePos(e) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-                x: e.clientX - rect.left,
-                y: e.clientY - rect.top
-            };
-        }
-
-        function startDrawing(e) {
-            isDrawing = true;
-            currentLine = [getMousePos(e)];
-            inkUsed = 0;
-        }
-
-        function drawLine(e) {
-            if (!isDrawing) return;
-            const pos = getMousePos(e);
-            const lastPos = currentLine[currentLine.length - 1];
-            const dist = Math.sqrt(Math.pow(pos.x - lastPos.x, 2) + Math.pow(pos.y - lastPos.y, 2));
+        // Рисование
+        let isDrawing = false, ink = 1000, currentLine = [];
+        const startDraw = (e) => { isDrawing = true; currentLine = []; if(e.cancelable) e.preventDefault(); };
+        const draw = (e) => {
+            if (!isDrawing || ink <= 0) return;
+            const t = e.touches ? e.touches[0] : e;
+            const x = t.clientX, y = t.clientY;
             
-            if (dist > 5 && inkUsed < inkLimit) {
-                currentLine.push(pos);
-                inkUsed += dist;
-            }
-        }
-
-        function endDrawing() {
-            if (!isDrawing) return;
-            isDrawing = false;
-            
-            if (currentLine.length > 2) {
-                // Создаем тело Matter.js из линии
-                const lineBodies = [];
-                for (let i = 0; i < currentLine.length - 1; i++) {
-                    const p1 = currentLine[i];
-                    const p2 = currentLine[i + 1];
-                    const width = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
-                    const angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                    
-                    const lineSegment = Bodies.rectangle(
-                        (p1.x + p2.x) / 2, 
-                        (p1.y + p2.y) / 2, 
-                        width, 5, // Длина и толщина сегмента
-                        { isStatic: true, angle: angle, render: { fillStyle: '#ff85a2' }, label: 'line_segment' }
-                    );
-                    lineBodies.push(lineSegment);
-                }
-                
-                // Добавляем сегменты линии в мир одним телом-составным
-                // Composite.add(world, Bodies.fromVertices((currentLine[0].x+currentLine[currentLine.length-1].x)/2, (currentLine[0].y+currentLine[currentLine.length-1].y)/2, currentLine, { isStatic: true })); // This is more complex to implement correctly
-                Composite.add(world, lineBodies);
-
-                // Ограничиваем количество линий (чернил)
-                if (inkUsed >= inkLimit) {
-                    console.log("Ink limit reached!");
-                    inkUsed = inkLimit;
+            if (currentLine.length > 0) {
+                const last = currentLine[currentLine.length - 1];
+                const d = Math.hypot(x - last.x, y - last.y);
+                if (d > 5) {
+                    const segment = Bodies.rectangle((x + last.x)/2, (y + last.y)/2, d, 6, {
+                        isStatic: true, angle: Math.atan2(y - last.y, x - last.x), label: 'line'
+                    });
+                    Composite.add(engine.world, segment);
+                    ink -= d;
+                    document.getElementById('ink-progress').style.width = (ink/10) + '%';
                 }
             }
-            currentLine = [];
-        }
+            currentLine.push({x, y});
+        };
 
-        // Обработка столкновений
+        canvas.addEventListener('touchstart', startDraw);
+        canvas.addEventListener('touchmove', draw);
+        window.addEventListener('touchend', () => isDrawing = false);
+
+        // Победа
+        let isDone = false;
         Events.on(engine, 'collisionStart', (event) => {
-            const pairs = event.pairs;
-            for (let i = 0; i < pairs.length; i++) {
-                const pair = pairs[i];
-                if ((pair.bodyA.label === 'bee' && pair.bodyB.label === 'flower') || 
-                    (pair.bodyA.label === 'flower' && pair.bodyB.label === 'bee')) {
-                    console.log("Bee reached flower!");
-                    showFinal();
+            event.pairs.forEach(pair => {
+                if ((pair.bodyA.label === 'bee' && pair.bodyB.label === 'flower') || (pair.bodyB.label === 'bee' && pair.bodyA.label === 'flower')) {
+                    isDone = true; document.getElementById('final-card').style.display = 'block';
                 }
-            }
+            });
         });
-
-        let isGameOver = false;
-        function showFinal() {
-            if (isGameOver) return;
-            isGameOver = true;
-            document.getElementById('game-container').style.display = 'none';
-            document.getElementById('final-card').style.display = 'block';
-            createConfetti();
-        }
-
-        // Конфетти (из template3)
-        function createConfetti() {
-            const colors = ['#d4af37', '#ff69b4', '#ffffff'];
-            for(let i=0; i<60; i++) {
-                const c = document.createElement('div');
-                c.className = 'confetti';
-                c.style.position = 'absolute'; c.style.width = '8px'; c.style.height = '8px';
-                c.style.background = colors[Math.floor(Math.random()*colors.length)];
-                c.style.left = "50%"; c.style.top = "50%"; c.style.borderRadius = "50%";
-                c.style.zIndex = "100";
-                document.body.appendChild(c);
-                const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * 400 + 50;
-                c.animate([
-                    { transform: 'translate(-50%, -50%) translate(0, 0)', opacity: 1 },
-                    { transform: `translate(-50%, -50%) translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`, opacity: 0 }
-                ], { duration: 2500, fill: 'forwards' });
-                setTimeout(() => c.remove(), 2500);
-            }
-        }
-
     </script>
 </body>
 </html>
