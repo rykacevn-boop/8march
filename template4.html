@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Мозаика 8 Марта — Special Effects</title>
@@ -129,7 +130,7 @@
 
         const colors = [null, '#ff85a2', '#fbbdc3', '#ffb6c1', '#d4af37', '#ffcce0', '#ff69b4', '#ffa07a'];
         let particles = [];
-        let flashingRows = []; // Для эффекта вспышки
+        let flashingRows = []; 
         const arena = Array.from({length: ROWS}, () => Array(COLS).fill(0));
         const player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
 
@@ -148,7 +149,7 @@
                 row.forEach((value, x) => {
                     if (value !== 0) {
                         const drawY = y + offset.y;
-                        // Эффект вспышки для собранной линии
+
                         if (flashingRows.includes(drawY)) {
                             ctx.fillStyle = '#fff';
                             ctx.fillRect(x + offset.x, drawY, 1, 1);
@@ -233,24 +234,24 @@
             }
         }
 
-		let isResetting = false; // Защита от спама
+		let isResetting = false; 
 
 		function playerReset(manual = false) {
 			if (manual) {
-				if (isResetting) return; // Если уже сбрасываем, выходим
+				if (isResetting) return; 
 				isResetting = true;
 				
 				const resetBtn = document.getElementById('reset-btn');
-				resetBtn.disabled = true; // Выключаем кнопку
+				resetBtn.disabled = true; 
 
-				// Очищаем всё
+
 				arena.forEach(row => row.fill(0));
 				player.score = 0;
-				particles = []; // Убираем старые взрывы
+				particles = []; 
 				flashingRows = [];
 				document.getElementById('lines-left').textContent = TARGET_LINES;
 
-				// Включаем кнопку обратно через 500мс
+
 				setTimeout(() => {
 					isResetting = false;
 					resetBtn.disabled = false;
@@ -263,7 +264,7 @@
 			player.pos.x = (COLS / 2 | 0) - (player.matrix[0].length / 2 | 0);
 			
 			if (collide(arena, player)) {
-				// Если места нет совсем — полная очистка (Game Over)
+
 				arena.forEach(row => row.fill(0));
 				player.score = 0;
 				document.getElementById('lines-left').textContent = TARGET_LINES;
@@ -327,16 +328,38 @@
 
         playerReset(); update();
     </script>
-<div id="watermark" style="
-    position: fixed; 
-    bottom: 10px; 
-    right: 10px; 
-    font-family: Arial, sans-serif; 
-    font-size: 12px; 
-    color: rgba(0,0,0,0.3); 
-    z-index: 9999;
-    pointer-events: none;">
-    Создано в @postcard_congrat_bot
-</div>
+<div id="watermark" style="position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;">
+        Создано в @postcard_congrat_bot
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name') || "";
+            const msg = urlParams.get('msg') || "";
+            const vip = urlParams.get('vip') || "0";
+            const receivedHash = urlParams.get('hash') || "";
+            
+
+            const SECRET_SALT = "MySuperSecret8March2026"; 
+            
+            const checkString = name + msg + vip + SECRET_SALT;
+            const calculatedHash = CryptoJS.MD5(checkString).toString();
+
+            const watermark = document.getElementById('watermark');
+
+            if (vip === '1' && calculatedHash === receivedHash) {
+
+                if (watermark) watermark.remove();
+                console.log("✅ Премиум подтвержден!");
+            } else {
+
+                if (watermark) watermark.style.display = 'block';
+                console.log("❌ Премиум не подтвержден");
+            }
+        };
+    </script>
 </body>
 </html>

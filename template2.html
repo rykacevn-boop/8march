@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Твой сюрприз ✨</title>
@@ -100,33 +101,33 @@
     const nameDisplay = document.getElementById('nameDisplay');
     const msgDisplay = document.getElementById('messageDisplay');
 
-    // Ультимативная функция декодирования
+
 	function decodeBase64(str) {
 		if (!str || str.trim() === "") return null;
 		try {
-			// 1. Превращаем urlsafe Base64 в обычный (заменяем - на + и _ на /)
+
 			let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
 			
-			// 2. Добавляем недостающее дополнение "=" (padding)
+
 			while (base64.length % 4 !== 0) {
 				base64 += '=';
 			}
 
-			// 3. Декодируем в байты
+
 			const binaryString = atob(base64);
 			const bytes = new Uint8Array(binaryString.length);
 			for (let i = 0; i < binaryString.length; i++) {
 				bytes[i] = binaryString.charCodeAt(i);
 			}
 			
-			// 4. Финальный UTF-8 текст
+
 			return new TextDecoder("utf-8").decode(bytes);
 		} catch (e) {
 			console.error("Ошибка декодирования:", e);
 			return null;
 		}
 	}
-    // Применяем данные
+
     const decodedName = decodeBase64(nameBase64);
     nameDisplay.textContent = (decodedName || "Прекрасная Дама");
 
@@ -135,7 +136,7 @@
         msgDisplay.textContent = decodedMsg;
     }
 
-    // Логика холста (Scratch)
+
     const canvas = document.getElementById('scratch-canvas');
     const ctx = canvas.getContext('2d');
     let isDrawing = false;
@@ -201,16 +202,38 @@
 
     window.onload = initCanvas;
 </script>
-<div id="watermark" style="
-    position: fixed; 
-    bottom: 10px; 
-    right: 10px; 
-    font-family: Arial, sans-serif; 
-    font-size: 12px; 
-    color: rgba(0,0,0,0.3); 
-    z-index: 9999;
-    pointer-events: none;">
-    Создано в @postcard_congrat_bot
-</div>
+<div id="watermark" style="position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;">
+        Создано в @postcard_congrat_bot
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name') || "";
+            const msg = urlParams.get('msg') || "";
+            const vip = urlParams.get('vip') || "0";
+            const receivedHash = urlParams.get('hash') || "";
+            
+
+            const SECRET_SALT = "MySuperSecret8March2026"; 
+            
+            const checkString = name + msg + vip + SECRET_SALT;
+            const calculatedHash = CryptoJS.MD5(checkString).toString();
+
+            const watermark = document.getElementById('watermark');
+
+            if (vip === '1' && calculatedHash === receivedHash) {
+
+                if (watermark) watermark.remove();
+                console.log("✅ Премиум подтвержден!");
+            } else {
+
+                if (watermark) watermark.style.display = 'block';
+                console.log("❌ Премиум не подтвержден");
+            }
+        };
+    </script>
 </body>
 </html>

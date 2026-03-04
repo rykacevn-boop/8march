@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Королевский сад 8 Марта</title>
@@ -137,13 +138,13 @@
     </div>
 
     <script>
-        // Декодирование параметров URL
+ 
         const params = new URLSearchParams(window.location.search);
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
         document.getElementById('nameDisplay').textContent = decode(params.get('name'));
         document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
-        // Настройка Matter.js
+
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
         engine.gravity.y = 0.55; 
@@ -152,7 +153,7 @@
         const ctx = canvas.getContext('2d');
         const resetBtn = document.getElementById('reset-btn');
 
-        // Предзагрузка изображения пчелы
+
         const beeImg = new Image();
         beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
@@ -167,7 +168,7 @@
         let ink = maxInk;
         let isDrawing = false, lastPos = null, isDone = false, animationId = null;
 
-        // Создание объектов
+
         const bee = Bodies.circle(70, 100, 25, { 
             restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity
         });
@@ -183,11 +184,11 @@
             isDrawing = false;
             document.getElementById('final-card').style.display = 'none';
 
-            // Удаление линий
+
             const bodies = Composite.allBodies(engine.world);
             bodies.forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
 
-            // Сброс физики пчелы
+
             Body.setStatic(bee, true);
             Body.setPosition(bee, { x: 70, y: 100 });
             Body.setVelocity(bee, { x: 0, y: 0 });
@@ -225,14 +226,14 @@
                 }
             });
 
-            // Отрисовка цветка (эмодзи)
+
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.font = '58px Arial'; ctx.fillText('🌸', flower.position.x, flower.position.y);
 
             animationId = requestAnimationFrame(run);
         }
 
-        // Логика рисования
+
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -267,7 +268,7 @@
             }
         };
 
-        // Слушатели событий
+
         canvas.addEventListener('mousedown', startDraw);
         window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', () => isDrawing = false);
@@ -275,7 +276,7 @@
         canvas.addEventListener('touchmove', draw, {passive: false});
         window.addEventListener('touchend', () => isDrawing = false);
 
-        // Столкновения
+
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
                 const labels = [pair.bodyA.label, pair.bodyB.label];
@@ -289,16 +290,38 @@
 
         run();
     </script>
-<div id="watermark" style="
-    position: fixed; 
-    bottom: 10px; 
-    right: 10px; 
-    font-family: Arial, sans-serif; 
-    font-size: 12px; 
-    color: rgba(0,0,0,0.3); 
-    z-index: 9999;
-    pointer-events: none;">
-    Создано в @postcard_congrat_bot
-</div>
+<div id="watermark" style="position: fixed; bottom: 10px; right: 10px; font-family: sans-serif; font-size: 12px; color: rgba(0,0,0,0.3); z-index: 9999; display: none;">
+        Создано в @postcard_congrat_bot
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <script>
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const name = urlParams.get('name') || "";
+            const msg = urlParams.get('msg') || "";
+            const vip = urlParams.get('vip') || "0";
+            const receivedHash = urlParams.get('hash') || "";
+            
+
+            const SECRET_SALT = "MySuperSecret8March2026"; 
+            
+            const checkString = name + msg + vip + SECRET_SALT;
+            const calculatedHash = CryptoJS.MD5(checkString).toString();
+
+            const watermark = document.getElementById('watermark');
+
+            if (vip === '1' && calculatedHash === receivedHash) {
+
+                if (watermark) watermark.remove();
+                console.log("✅ Премиум подтвержден!");
+            } else {
+
+                if (watermark) watermark.style.display = 'block';
+                console.log("❌ Премиум не подтвержден");
+            }
+        };
+    </script>
 </body>
 </html>
