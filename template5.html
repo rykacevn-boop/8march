@@ -7,7 +7,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
     <style>
-        :root { --primary-pink: #ff85a2; --deep-pink: #d1305c; --gold: #d4af37; --text: #4a4a4a; }
+        :root { 
+            --primary-pink: #ff85a2; 
+            --deep-pink: #d1305c; 
+            --gold: #d4af37; 
+            --text: #4a4a4a; 
+        }
         
         body { 
             margin: 0; padding: 0; height: 100vh; overflow: hidden; 
@@ -17,7 +22,14 @@
             touch-action: none; -webkit-user-select: none; user-select: none;
         }
 
-        #canvas-container { position: relative; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        #canvas-container { 
+            position: relative; 
+            width: 100vw; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
         
         canvas { 
             display: block; 
@@ -28,44 +40,90 @@
             border: 4px solid var(--gold); 
             border-radius: 30px; 
             box-shadow: 0 25px 50px rgba(0,0,0,0.15); 
+            z-index: 1;
         }
 
+        /* Описание задачи сбоку */
+        .mission-sidebar {
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 160px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 20px;
+            border-left: 5px solid var(--gold);
+            backdrop-filter: blur(5px);
+            z-index: 5;
+            pointer-events: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        }
+        .mission-sidebar h3 { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin: 0 0 10px 0; color: var(--deep-pink); }
+        .mission-sidebar p { font-size: 0.85rem; margin: 0; color: var(--text); line-height: 1.5; }
+
+        /* Верхний интерфейс */
         .ui { position: absolute; top: 30px; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
-        .title { font-family: 'Playfair Display', serif; color: var(--text); font-size: 1.4rem; font-weight: 700; text-shadow: 0 1px 5px rgba(255,255,255,0.8); }
-        .ink-bar { width: 200px; height: 10px; background: rgba(0,0,0,0.1); margin: 8px auto; border-radius: 5px; border: 1px solid var(--gold); overflow: hidden; }
+        .title { font-family: 'Playfair Display', serif; color: var(--text); font-size: 1.6rem; font-weight: 700; text-shadow: 0 1px 5px rgba(255,255,255,0.8); margin-bottom: 10px; }
+        
+        .ink-container { display: flex; flex-direction: column; align-items: center; }
+        .ink-label { font-size: 0.75rem; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+        .ink-bar { width: 220px; height: 12px; background: rgba(0,0,0,0.1); border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; }
         #ink-progress { width: 100%; height: 100%; background: var(--gold); transition: width 0.1s ease-out; }
         
+        /* Кнопка сброса */
         #reset-btn { 
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
-            padding: 12px 30px; background: var(--gold); border: none; color: white; 
+            padding: 14px 35px; background: var(--gold); border: none; color: white; 
             border-radius: 50px; font-weight: bold; cursor: pointer; pointer-events: auto; z-index: 20; 
             box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4); 
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
         }
 
-        /* Стиль для неактивной кнопки */
         #reset-btn:disabled {
             background: #ccc;
             box-shadow: none;
             cursor: not-allowed;
-            opacity: 0.5;
+            opacity: 0.6;
             transform: translateX(-50%) scale(0.95);
         }
 
+        #reset-btn:active:not(:disabled) { transform: translateX(-50%) scale(0.9); }
+
+        /* Финальная карточка */
         .card { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             padding: 40px; border-radius: 30px; width: 280px; text-align: center; z-index: 100; 
-            background: white; border: 2px solid var(--gold); box-shadow: 0 20px 40px rgba(0,0,0,0.2); 
+            background: white; border: 2px solid var(--gold); box-shadow: 0 25px 60px rgba(0,0,0,0.3); 
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.275, 1.55);
         }
+
+        @keyframes popIn { from { opacity: 0; transform: translate(-50%, -60%) scale(0.8); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
+        
         .card-name { color: var(--primary-pink); font-size: 2.2rem; font-weight: 700; display: block; margin: 15px 0; font-family: 'Playfair Display', serif; }
-        .card button { padding: 15px 30px; border: none; background: var(--primary-pink); color: white; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 25px; }
+        .card p { line-height: 1.6; color: #666; font-size: 1rem; }
+        .card button { padding: 15px 30px; border: none; background: var(--primary-pink); color: white; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 25px; box-shadow: 0 5px 15px rgba(255, 133, 162, 0.3); }
+
+        /* Адаптивность */
+        @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
 </head>
 <body>
+
+    <div class="mission-sidebar">
+        <h3>Твоя цель:</h3>
+        <p>Нарисуй путь для <b>пчёлки</b>, чтобы она долетела до <b>цветка</b>. Запас волшебной пыльцы ограничен!</p>
+    </div>
+
     <div id="canvas-container">
         <div class="ui">
             <div class="title">С Праздником 8 Марта! ✨</div>
-            <div class="ink-bar"><div id="ink-progress"></div></div>
+            <div class="ink-container">
+                <span class="ink-label">Запас пыльцы 🐝</span>
+                <div class="ink-bar"><div id="ink-progress"></div></div>
+            </div>
         </div>
         <button id="reset-btn" onclick="resetLevel()" disabled>СНАЧАЛА 🔄</button>
         <canvas id="game"></canvas>
@@ -74,16 +132,18 @@
     <div class="card" id="final-card">
         <h1 style="margin:0; font-size: 1.2rem; color: #555;">Для тебя,</h1>
         <span class="card-name" id="nameDisplay"></span>
-        <p id="messageDisplay" style="line-height: 1.6; color: #666;"></p>
+        <p id="messageDisplay"></p>
         <button onclick="resetLevel()">ПОПРОБОВАТЬ ЕЩЕ 🌸</button>
     </div>
 
     <script>
+        // Декодирование параметров URL
         const params = new URLSearchParams(window.location.search);
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
         document.getElementById('nameDisplay').textContent = decode(params.get('name'));
         document.getElementById('messageDisplay').textContent = decode(params.get('msg'));
 
+        // Настройка Matter.js
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
         engine.gravity.y = 0.55; 
@@ -92,6 +152,7 @@
         const ctx = canvas.getContext('2d');
         const resetBtn = document.getElementById('reset-btn');
 
+        // Предзагрузка изображения пчелы
         const beeImg = new Image();
         beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
@@ -106,6 +167,7 @@
         let ink = maxInk;
         let isDrawing = false, lastPos = null, isDone = false, animationId = null;
 
+        // Создание объектов
         const bee = Bodies.circle(70, 100, 25, { 
             restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity
         });
@@ -116,18 +178,16 @@
         function resetLevel() {
             if (animationId) cancelAnimationFrame(animationId);
             
-            // Блокируем кнопку при сбросе
             resetBtn.disabled = true;
-            
             isDone = false;
             isDrawing = false;
             document.getElementById('final-card').style.display = 'none';
 
+            // Удаление линий
             const bodies = Composite.allBodies(engine.world);
-            bodies.forEach(b => { 
-                if(b.label === 'line') Composite.remove(engine.world, b); 
-            });
+            bodies.forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
 
+            // Сброс физики пчелы
             Body.setStatic(bee, true);
             Body.setPosition(bee, { x: 70, y: 100 });
             Body.setVelocity(bee, { x: 0, y: 0 });
@@ -147,12 +207,13 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             Composite.allBodies(engine.world).forEach(body => {
-                ctx.beginPath();
                 if (body.label === 'line') {
+                    ctx.beginPath();
                     body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
                     ctx.fillStyle = '#d4af37';
                     ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
                     ctx.fill();
+                    ctx.shadowBlur = 0;
                 }
 
                 if (body.label === 'bee') {
@@ -164,13 +225,14 @@
                 }
             });
 
-            ctx.shadowBlur = 0;
+            // Отрисовка цветка (эмодзи)
             ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             ctx.font = '58px Arial'; ctx.fillText('🌸', flower.position.x, flower.position.y);
 
             animationId = requestAnimationFrame(run);
         }
 
+        // Логика рисования
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -182,13 +244,10 @@
             if (isDone) return;
             isDrawing = true; 
             lastPos = getPos(e);
-            
             if (bee.isStatic) {
                 Body.setStatic(bee, false);
-                // Активируем кнопку только когда пошло рисование
                 resetBtn.disabled = false;
             }
-            
             if(e.cancelable) e.preventDefault();
         };
 
@@ -208,6 +267,7 @@
             }
         };
 
+        // Слушатели событий
         canvas.addEventListener('mousedown', startDraw);
         window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', () => isDrawing = false);
@@ -215,14 +275,14 @@
         canvas.addEventListener('touchmove', draw, {passive: false});
         window.addEventListener('touchend', () => isDrawing = false);
 
+        // Столкновения
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
                 const labels = [pair.bodyA.label, pair.bodyB.label];
                 if (labels.includes('bee') && labels.includes('flower') && !isDone) {
                     isDone = true;
-                    // Блокируем кнопку при победе
                     resetBtn.disabled = true;
-                    setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 300);
+                    setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 400);
                 }
             });
         });
