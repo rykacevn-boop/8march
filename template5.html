@@ -12,8 +12,17 @@
         .ui { position: absolute; top: 20px; width: 100%; text-align: center; pointer-events: none; z-index: 10; }
         .ink-bar { width: 180px; height: 8px; background: #eee; margin: 8px auto; border-radius: 4px; border: 1px solid #ff85a2; overflow: hidden; }
         #ink-progress { width: 100%; height: 100%; background: #ff85a2; transition: width 0.1s; }
+        
+        /* Кнопка сброса на игровом поле */
+        #reset-btn { 
+            position: absolute; bottom: 20px; left: 20px; 
+            padding: 10px 20px; background: white; border: 2px solid #ff85a2; 
+            color: #ff85a2; border-radius: 10px; font-weight: bold; 
+            cursor: pointer; pointer-events: auto; z-index: 20;
+        }
+
         .card { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 25px; border-radius: 20px; width: 280px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.2); z-index: 100; border: 2px solid #ff85a2; }
-        button { padding: 12px 25px; border: none; background: #ff85a2; color: white; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        .card button { padding: 12px 25px; border: none; background: #ff85a2; color: white; border-radius: 10px; font-weight: bold; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -22,13 +31,14 @@
             <div style="color: #ff85a2; font-weight: bold;">РИСУЙ ПУТЬ ✍️</div>
             <div class="ink-bar"><div id="ink-progress"></div></div>
         </div>
+        <button id="reset-btn" onclick="resetLevel()">СНАЧАЛА 🔄</button>
         <canvas id="game"></canvas>
     </div>
 
     <div class="card" id="final-card">
         <h2 id="nameDisplay" style="color: #ff85a2; margin-top: 0;"></h2>
         <p id="messageDisplay" style="line-height: 1.5;"></p>
-        <button onclick="location.reload()">ЕЩЕ РАЗ</button>
+        <button onclick="location.reload()">ИГРАТЬ ЕЩЕ</button>
     </div>
 
     <script>
@@ -39,8 +49,6 @@
 
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
-        
-        // Снижаем гравитацию для более плавного падения
         engine.gravity.y = 0.6; 
 
         const canvas = document.getElementById('game');
@@ -53,20 +61,34 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Динамический запас чернил в зависимости от ширины экрана
         let maxInk = canvas.width * 1.5;
         let ink = maxInk;
+        let isDrawing = false, lastPos = null, isDone = false;
 
-        // Объекты: пчела изначально статична (заморожена)
-        const bee = Bodies.circle(60, 100, 18, { 
-            restitution: 0.4, 
-            friction: 0.1, 
-            label: 'bee',
-            isStatic: true 
-        });
+        // Создание объектов
+        const bee = Bodies.circle(60, 100, 18, { restitution: 0.4, friction: 0.1, label: 'bee', isStatic: true });
         const flower = Bodies.circle(canvas.width - 60, canvas.height - 100, 35, { isStatic: true, label: 'flower' });
         const ground = Bodies.rectangle(canvas.width/2, canvas.height + 10, canvas.width, 20, { isStatic: true });
         Composite.add(engine.world, [bee, flower, ground]);
+
+        function resetLevel() {
+            // Очищаем все нарисованные линии
+            const allBodies = Composite.allBodies(engine.world);
+            allBodies.forEach(body => {
+                if (body.label === 'line') Composite.remove(engine.world, body);
+            });
+
+            // Возвращаем пчелу в старт
+            Body.setStatic(bee, true);
+            Body.setPosition(bee, { x: 60, y: 100 });
+            Body.setVelocity(bee, { x: 0, y: 0 });
+            Body.setAngularVelocity(bee, 0);
+
+            // Сброс чернил
+            ink = maxInk;
+            document.getElementById('ink-progress').style.width = '100%';
+            isDone = false;
+        }
 
         function run() {
             Engine.update(engine);
@@ -88,8 +110,6 @@
             if (!isDone) requestAnimationFrame(run);
         }
 
-        let isDrawing = false, lastPos = null;
-
         function getPos(e) {
             const rect = canvas.getBoundingClientRect();
             const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
@@ -98,19 +118,15 @@
         }
 
         const startDraw = (e) => {
+            if (isDone) return;
             isDrawing = true;
             lastPos = getPos(e);
-            
-            // Размораживаем пчелу при первом взаимодействии
-            if (bee.isStatic) {
-                Body.setStatic(bee, false);
-            }
-            
+            if (bee.isStatic) Body.setStatic(bee, false);
             if(e.cancelable) e.preventDefault();
         };
 
         const draw = (e) => {
-            if (!isDrawing || ink <= 0) return;
+            if (!isDrawing || ink <= 0 || isDone) return;
             const currentPos = getPos(e);
             if (!lastPos) return;
 
@@ -123,11 +139,7 @@
                 });
                 Composite.add(engine.world, segment);
                 ink -= dist;
-                
-                // Процентное обновление полоски
-                const inkPercent = Math.max(0, (ink / maxInk) * 100);
-                document.getElementById('ink-progress').style.width = inkPercent + '%';
-                
+                document.getElementById('ink-progress').style.width = Math.max(0, (ink / maxInk) * 100) + '%';
                 lastPos = currentPos;
             }
         };
@@ -137,12 +149,10 @@
         canvas.addEventListener('mousedown', startDraw);
         window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', stopDraw);
-
         canvas.addEventListener('touchstart', startDraw, {passive: false});
         canvas.addEventListener('touchmove', draw, {passive: false});
         window.addEventListener('touchend', stopDraw);
 
-        let isDone = false;
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
                 const labels = [pair.bodyA.label, pair.bodyB.label];
