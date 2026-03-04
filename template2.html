@@ -121,7 +121,7 @@ h1 {
     </div>
     
     <canvas id="scratch-canvas"></canvas>
-    <div class="hint">Сотри золото пальцем 👆</div>
+    <div id="hintText" class="hint">Сотри слой пальцем 👆</div>
 </div>
 
 <div id="watermark">Создано в @postcard_congrat_bot</div>
@@ -129,7 +129,6 @@ h1 {
 <audio id="bg-music" loop></audio>
 
 <script>
-    // --- НАСТРОЙКИ ---
     const SECRET_SALT = "MySuperSecret8March2026"; 
     const MUSIC_MAP = {
         "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
@@ -137,17 +136,14 @@ h1 {
         "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
     };
 
-    // --- ДЕКОДИРОВАНИЕ ДАННЫХ ---
     const params = new URLSearchParams(window.location.search);
     const nameBase64 = params.get('name') || "";
     const msgBase64 = params.get('msg') || "";
     const vipParam = params.get('vip') || "0";
     const musicId = params.get('music') || "0";
-    // Тема для хеша: если VIP, используем dark, иначе light
     const theme = (vipParam === '1') ? "dark" : "light"; 
     const receivedHash = params.get('hash') || "";
 
-    // Хеш: должен совпадать с логикой в Python
     const checkString = nameBase64 + msgBase64 + vipParam + musicId + theme + SECRET_SALT;
     const calculatedHash = CryptoJS.MD5(checkString).toString();
 
@@ -170,26 +166,23 @@ h1 {
         } catch (e) { return null; }
     }
 
-    // --- ДИНАМИЧЕСКИЙ ХОЛСТ (Цвета зависят от темы) ---
     function initCanvas() {
         canvas.width = canvas.offsetWidth;
         canvas.height = canvas.offsetHeight;
         
-        // Считываем текущие цвета из CSS переменных
         const style = getComputedStyle(document.documentElement);
         const c1 = style.getPropertyValue('--scratch-start').trim();
         const c2 = style.getPropertyValue('--scratch-mid').trim();
         const c3 = style.getPropertyValue('--scratch-end').trim();
         
         const grad = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-        grad.addColorStop(0, c1 || '#bf953f'); 
-        grad.addColorStop(0.5, c2 || '#fcf6ba'); 
-        grad.addColorStop(1, c3 || '#aa8954'); 
+        grad.addColorStop(0, c1); 
+        grad.addColorStop(0.5, c2); 
+        grad.addColorStop(1, c3); 
         
         ctx.fillStyle = grad;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Эффект искр (золотые для VIP, светлые для обычных)
         for(let i=0; i<850; i++) {
             ctx.fillStyle = (vipParam === '1') 
                 ? (Math.random() > 0.4 ? 'rgba(255, 246, 186, 0.4)' : 'rgba(212, 175, 55, 0.2)')
@@ -197,13 +190,14 @@ h1 {
             ctx.fillRect(Math.random()*canvas.width, Math.random()*canvas.height, 1.4, 1.4);
         }
         
-        ctx.fillStyle = (vipParam === '1') ? "rgba(0, 0, 0, 0.6)" : "rgba(74, 74, 74, 0.6)"; 
+        // ТЕКСТ ВНУТРИ ХОЛСТА (меняется в зависимости от VIP)
+        const innerText = (vipParam === '1' && calculatedHash === receivedHash) ? "Сотри золото" : "Сотри слой";
+        ctx.fillStyle = (vipParam === '1') ? "rgba(0, 0, 0, 0.5)" : "rgba(74, 74, 74, 0.5)"; 
         ctx.font = "600 14px Montserrat";
         ctx.textAlign = "center";
-        ctx.fillText("SCRATCH FOR SURPRISE", canvas.width/2, canvas.height/2);
+        ctx.fillText(innerText.toUpperCase(), canvas.width/2, canvas.height/2);
     }
 
-    // --- ОСТАЛЬНАЯ ЛОГИКА ---
     function startMusic() {
         if (!musicStarted && MUSIC_MAP[musicId]) {
             const audio = document.getElementById('bg-music');
@@ -239,16 +233,16 @@ h1 {
 
     window.onload = function() {
         const watermark = document.getElementById('watermark');
+        const hint = document.getElementById('hintText');
 
-        // УСЛОВИЕ ПЕРЕКЛЮЧЕНИЯ ОФОРМЛЕНИЯ
         if (calculatedHash === receivedHash && vipParam === '1') {
-            // Активируем черную тему через атрибут, который мы прописали в CSS
             document.documentElement.setAttribute('data-vip', '1');
             if (watermark) watermark.remove(); 
+            if (hint) hint.textContent = "Сотри золото пальцем 👆"; // Для VIP
         } else {
-            // Если не VIP или хеш неверный — сбрасываем атрибут (белая тема)
             document.documentElement.removeAttribute('data-vip');
             if (watermark) watermark.style.display = 'block';
+            if (hint) hint.textContent = "Сотри слой пальцем 👆"; // Для обычных
         }
 
         document.getElementById('nameDisplay').textContent = decodeBase64(nameBase64) || "Прекрасная Дама";
