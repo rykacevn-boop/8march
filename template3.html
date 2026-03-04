@@ -21,6 +21,7 @@
             cursor: pointer; transition: transform 0.3s ease;
             z-index: 5; font-size: 40px; display: flex;
             justify-content: center; align-items: center;
+            user-select: none;
         }
 
         /* Финальная карточка */
@@ -29,7 +30,7 @@
             background: rgba(255, 255, 255, 0.9);
             padding: 30px; border-radius: 25px;
             box-shadow: 0 15px 35px rgba(216, 27, 96, 0.2);
-            text-align: center; max-width: 80%;
+            text-align: center; max-width: 85%;
             animation: popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
@@ -42,8 +43,16 @@
             font-size: 80px; margin-bottom: 10px;
         }
 
+        #messageDisplay {
+            color: #880e4f;
+            font-size: 1.1rem;
+            line-height: 1.5;
+            white-space: pre-wrap; /* Сохраняем переносы строк */
+        }
+
         .confetti {
             position: absolute; width: 10px; height: 10px; z-index: 15;
+            pointer-events: none;
         }
     </style>
 </head>
@@ -55,23 +64,34 @@
         <div id="bouquet-container">💐</div>
         <h1 style="color: #d81b60; margin: 0;">С 8 Марта,</h1>
         <div id="nameDisplay" style="color: #ad1457; font-size: 1.8rem; font-weight: bold; margin: 10px 0;"></div>
-        <p style="color: #880e4f;">Ты собрала самый красивый букет в мире! Пусть твоя жизнь будет такой же яркой! 🌸</p>
+        <div id="messageDisplay">Ты собрала самый красивый букет в мире! Пусть твоя жизнь будет такой же яркой! 🌸</div>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
         const nameBase64 = params.get('name');
+        const msgBase64 = params.get('msg');
+        
         const flowers = ['🌸', '🌷', '🌹', '🌺', '🌻', '🌼', '💐', '🍀'];
         let collected = 0;
         const total = 10;
 
-        // Декодируем имя
-        if (nameBase64) {
+        // Универсальная функция декодирования
+        function decodeBase64(str) {
             try {
-                const decodedName = decodeURIComponent(atob(nameBase64).split('').map(c => 
+                return decodeURIComponent(atob(str).split('').map(c => 
                     '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-                document.getElementById('nameDisplay').innerText = decodedName + '!';
-            } catch (e) { document.getElementById('nameDisplay').innerText = "Прекрасная Дама!"; }
+            } catch (e) { return null; }
+        }
+
+        // 1. Декодируем Имя
+        const decodedName = decodeBase64(nameBase64);
+        document.getElementById('nameDisplay').innerText = (decodedName || "Прекрасная Дама") + "!";
+
+        // 2. Декодируем Сообщение
+        const decodedMsg = decodeBase64(msgBase64);
+        if (decodedMsg && decodedMsg.trim() !== "") {
+            document.getElementById('messageDisplay').innerText = decodedMsg;
         }
 
         function createFlower() {
@@ -88,10 +108,12 @@
         }
 
         function collect(element) {
+            if (element.getAttribute('data-collected')) return;
+            element.setAttribute('data-collected', 'true');
+            
             collected++;
             document.getElementById('count').innerText = collected;
             
-            // Анимация полета в центр
             element.style.transition = "all 0.5s ease-in";
             element.style.left = "50%";
             element.style.top = "50%";
@@ -104,7 +126,7 @@
             if (collected === total) {
                 setTimeout(showFinal, 600);
             } else {
-                createFlower(); // Создаем следующий
+                createFlower(); 
             }
         }
 
@@ -115,21 +137,25 @@
         }
 
         function createConfetti() {
-            for(let i=0; i<50; i++) {
+            for(let i=0; i<60; i++) {
                 const c = document.createElement('div');
                 c.className = 'confetti';
-                c.style.background = ['#ff69b4', '#ff1493', '#ffd700', '#ffffff'][Math.floor(Math.random()*4)];
+                c.style.background = ['#ff69b4', '#ff1493', '#ffd700', '#ffffff', '#00ced1'][Math.floor(Math.random()*5)];
                 c.style.left = "50%";
                 c.style.top = "50%";
                 document.body.appendChild(c);
                 
                 const angle = Math.random() * Math.PI * 2;
-                const dist = Math.random() * 200 + 100;
+                const dist = Math.random() * 250 + 100;
                 
                 c.animate([
-                    { transform: 'translate(0, 0)', opacity: 1 },
-                    { transform: `translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px)`, opacity: 0 }
-                ], { duration: 1000 + Math.random()*1000, fill: 'forwards' });
+                    { transform: 'translate(-50%, -50%) translate(0, 0) scale(1)', opacity: 1 },
+                    { transform: `translate(-50%, -50%) translate(${Math.cos(angle)*dist}px, ${Math.sin(angle)*dist}px) scale(0)`, opacity: 0 }
+                ], { 
+                    duration: 1200 + Math.random()*800, 
+                    fill: 'forwards',
+                    easing: 'ease-out'
+                });
             }
         }
 
