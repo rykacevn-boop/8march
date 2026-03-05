@@ -112,6 +112,42 @@
             border-radius: 20px; border: 2px solid var(--accent);
             display: flex; flex-direction: column; align-items: center; z-index: 10;
         }
+
+		/* АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ УСТРОЙСТВ */
+				@media (max-width: 768px) {
+					/* Переносим боковую панель вниз и делаем ее компактной */
+					.mission-sidebar {
+						top: auto; 
+						bottom: 80px; 
+						left: 50%; 
+						transform: translateX(-50%);
+						width: 90%; 
+						padding: 10px; 
+						border-left: none; 
+						border-bottom: 3px solid var(--accent);
+						text-align: center; 
+						box-sizing: border-box;
+					}
+					.mission-sidebar h3 { display: none; } /* Скрываем заголовок "Твоя цель" для экономии места */
+					.mission-sidebar p { margin: 0; font-size: 0.85rem; }
+					
+					/* Уменьшаем верхнюю карточку */
+					.ui-card { 
+						top: 10px; 
+						padding: 10px; 
+						width: 90%; 
+						box-sizing: border-box; 
+					}
+					.ui-card .gradient-text { font-size: 1.1rem; }
+					.ink-bar { width: 100%; } /* Полоска чернил на всю ширину карточки */
+					
+					/* Сдвигаем кнопку сброса */
+					#reset-btn { 
+						bottom: 20px; 
+						padding: 10px 25px; 
+						font-size: 0.8rem;
+					}
+				}
     </style>
 </head>
 <body>
@@ -185,9 +221,11 @@
         const beeImg = new Image();
         beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
-        function resize() {
+		function resize() {
             canvas.width = Math.min(window.innerWidth * 0.95, 800);
-            canvas.height = Math.min(window.innerHeight * 0.75, 600);
+            // Если экран узкий (телефон), отдаем под игру 60% высоты, иначе 75%
+            const heightFactor = window.innerWidth < 768 ? 0.6 : 0.75;
+            canvas.height = Math.min(window.innerHeight * heightFactor, 600);
         }
         resize();
 
