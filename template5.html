@@ -16,7 +16,7 @@
             --gold-grad: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
         }
         
-        /* ЯВНАЯ ОБЫЧНАЯ ТЕМА */
+        /* ОБЫЧНАЯ ТЕМА */
         body:not([data-vip="1"]), 
         [data-vip="0"] {
             --bg: #fff5f8 !important;
@@ -24,15 +24,20 @@
             --glass: rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* ПРЕМИУМ ТЕМА (VIP) - ТЕПЕРЬ РОЗОВАЯ */
+        /* РОЗОВАЯ VIP ТЕМА */
         [data-vip="1"] {
-            --bg: #ffeef2 !important; /* Светло-розовый фон */
+            --bg: #fff0f3 !important; /* Светло-розовый фон */
             --glass: rgba(255, 255, 255, 0.9) !important;
-            --text: #c9184a !important; /* Насыщенный розовый текст */
-            --primary-pink: #ff85a2 !important;
-            --deep-pink: #d1305c !important;
-            --gold: #ff4d6d !important; /* Розовый акцент вместо золотого */
+            --text: #c9184a !important; /* Малиновый текст */
+            --primary-pink: #ff758f !important;
+            --deep-pink: #ff4d6d !important;
+            --gold: #ff758f !important; /* Розовый вместо золотого в границах */
             --gold-grad: linear-gradient(135deg, #ff758f 0%, #ffb3c1 45%, #ff4d6d 100%) !important;
+        }
+
+        /* СКРЫТИЕ ВОТЕРМАРКА ПРИ VIP */
+        [data-vip="1"] #watermark {
+            display: none !important;
         }
 
         body { 
@@ -85,10 +90,6 @@
             box-shadow: 0 0 10px rgba(255, 117, 143, 0.5);
         }
         
-        [data-vip="1"] #final-card .gold-text-effect {
-            filter: drop-shadow(0 0 8px rgba(255, 117, 143, 0.4));
-        }
-
         #reset-btn { 
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
             padding: 14px 35px; background: var(--gold-grad); border: none; color: #000; 
@@ -106,48 +107,16 @@
         
         .card-name { font-size: 2.5rem; margin: 15px 0; font-family: 'Playfair Display', serif; }
 
-        .btn-icon {
-            background: var(--gold-grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-size: 1.2rem;
-            margin-left: 5px;
-            vertical-align: middle;
-        }
-        
-        .btn-reset .btn-icon {
-            color: #000; 
-            -webkit-text-fill-color: initial;
-            background: none;
-            font-size: 1.1rem;
-            vertical-align: middle;
-            margin-left: 5px;
-        }
-
-        [data-vip="1"] .btn-reset .btn-icon {
-            background: var(--gold-grad);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: bold;
-        }
-
         #watermark {
             position: fixed;
             bottom: 15px;
             right: 15px;
             font-family: 'Montserrat', sans-serif; 
             font-size: 10px;
-            letter-spacing: 0.5px;
             color: rgba(128, 128, 128, 0.5);
             z-index: 9999;
             pointer-events: none;
             text-align: right;
-            display: block; /* По умолчанию виден */
-        }
-
-        /* СКРЫВАЕМ ПРИ VIP=1 */
-        [data-vip="1"] #watermark {
-            display: none !important;
         }
 
         .ui {
@@ -157,16 +126,11 @@
             width: 100%;
             display: flex;
             justify-content: center;
-            align-items: center;
-            pointer-events: none;
             z-index: 10;
-            margin: 0;
         }
 
         .ui-card {
             background: var(--glass);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
             padding: 12px 20px;
             border-radius: 20px;
             border: 2px solid var(--gold);
@@ -176,43 +140,16 @@
             align-items: center;
             pointer-events: auto;
             min-width: 260px;
-            max-width: 90vw;
         }
 
-        .title {
-            margin: 0 0 8px 0 !important;
-            font-size: 1.2rem !important;
-            text-align: center;
-            line-height: 1.2;
-        }
+        .title { font-size: 1.2rem !important; margin-bottom: 8px !important; }
 
-        .ink-container {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .ink-bar {
-            width: 200px;
-            height: 10px;
-            background: rgba(0,0,0,0.1);
-            border-radius: 10px;
-            border: 1px solid var(--gold);
-            overflow: hidden;
-        }
-        
-        #reset-btn .btn-icon, 
-        #final-btn .btn-icon,
-        .btn-icon {
+        #reset-btn .btn-icon, .btn-icon {
             color: #000 !important;
             -webkit-text-fill-color: #000 !important;
-            background: none !important;
-            -webkit-background-clip: initial !important; 
             font-weight: 900;
             display: inline-block;
             vertical-align: middle;
-            filter: none !important;
         }
         
         @media (max-width: 950px) { .mission-sidebar { display: none; } }
@@ -252,12 +189,11 @@
             </button>
     </div>
 
-    <div id="watermark">Создано в @postcard_congrat_bot</div>
+    <div id="watermark" style="display: block;">Создано в @postcard_congrat_bot</div>
     <audio id="bg-music" loop></audio>
 
     <script>
-        // --- Настройки и Музыка ---
-        const SECRET_SALT = "MySuperSecret8March2026"; 
+        const SECRET_SALT = "MySuperSecret8March2026";
         const MUSIC_MAP = {
             "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
             "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
@@ -271,23 +207,11 @@
         const musicId = params.get('music') || "0";
         const receivedHash = params.get('hash') || "";
 
-        let musicStarted = false;
-        function startMusic() {
-            if (!musicStarted && MUSIC_MAP[musicId]) {
-                const audio = document.getElementById('bg-music');
-                audio.src = MUSIC_MAP[musicId];
-                audio.play().catch(() => console.log("Audio play blocked by browser"));
-                musicStarted = true;
-            }
-        }
-
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
 
         // --- Физика игры ---
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
-        engine.gravity.y = 0.55; 
-
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         const resetBtn = document.getElementById('reset-btn');
@@ -300,27 +224,19 @@
         }
         resize();
 
-        let maxInk = canvas.width * 1.5;
-        let ink = maxInk;
-        let isDrawing = false, lastPos = null, isDone = false, animationId = null;
+        let maxInk = canvas.width * 1.5, ink = maxInk, isDrawing = false, lastPos = null, isDone = false, animationId = null;
 
-        const bee = Bodies.circle(70, 100, 25, { restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity });
+        const bee = Bodies.circle(70, 100, 25, { restitution: 0.3, label: 'bee', isStatic: true });
         const flower = Bodies.circle(canvas.width - 70, canvas.height - 110, 35, { isStatic: true, label: 'flower' });
-        const ground = Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true });
-        Composite.add(engine.world, [bee, flower, ground]);
+        Composite.add(engine.world, [bee, flower, Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true })]);
 
         function resetLevel() {
             if (animationId) cancelAnimationFrame(animationId);
-            resetBtn.disabled = true;
-            isDone = false; isDrawing = false;
+            resetBtn.disabled = true; isDone = false; isDrawing = false;
             document.getElementById('final-card').style.display = 'none';
             Composite.allBodies(engine.world).forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
-            Body.setStatic(bee, true);
-            Body.setPosition(bee, { x: 70, y: 100 });
-            Body.setVelocity(bee, { x: 0, y: 0 });
-            Body.setAngle(bee, 0);
-            ink = maxInk;
-            document.getElementById('ink-progress').style.width = '100%';
+            Body.setStatic(bee, true); Body.setPosition(bee, { x: 70, y: 100 }); Body.setVelocity(bee, { x: 0, y: 0 });
+            ink = maxInk; document.getElementById('ink-progress').style.width = '100%';
             run();
         }
 
@@ -328,95 +244,64 @@
             if (isDone) return; 
             Engine.update(engine);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Получаем цвет для линий из CSS переменной
-            const lineColor = getComputedStyle(document.body).getPropertyValue('--gold').trim();
+            const accent = getComputedStyle(document.body).getPropertyValue('--gold').trim();
 
             Composite.allBodies(engine.world).forEach(body => {
                 if (body.label === 'line') {
-                    ctx.beginPath();
-                    body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
-                    ctx.fillStyle = lineColor;
-                    ctx.shadowBlur = 8; ctx.shadowColor = lineColor;
-                    ctx.fill(); ctx.shadowBlur = 0;
+                    ctx.beginPath(); body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
+                    ctx.fillStyle = accent; ctx.fill();
                 }
                 if (body.label === 'bee') {
                     ctx.save(); ctx.translate(body.position.x, body.position.y);
-                    ctx.rotate(body.angle); ctx.drawImage(beeImg, -30, -30, 60, 60);
-                    ctx.restore();
+                    ctx.rotate(body.angle); ctx.drawImage(beeImg, -30, -30, 60, 60); ctx.restore();
                 }
             });
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '58px Arial';
-            ctx.fillText('🌸', flower.position.x, flower.position.y);
+            ctx.font = '58px Arial'; ctx.fillText('🌸', flower.position.x - 30, flower.position.y + 20);
             animationId = requestAnimationFrame(run);
         }
 
-        function getPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-            const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-            return { x: clientX - rect.left, y: clientY - rect.top };
-        }
-
-        const startDraw = (e) => {
-            if (isDone) return;
-            startMusic(); 
-            isDrawing = true; lastPos = getPos(e);
+        canvas.addEventListener('mousedown', (e) => {
+            isDrawing = true; const rect = canvas.getBoundingClientRect();
+            lastPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             if (bee.isStatic) { Body.setStatic(bee, false); resetBtn.disabled = false; }
-            if(e.cancelable) e.preventDefault();
-        };
+        });
 
-        const draw = (e) => {
+        window.addEventListener('mousemove', (e) => {
             if (!isDrawing || ink <= 0 || isDone) return;
-            const currentPos = getPos(e);
-            if (!lastPos) return;
+            const rect = canvas.getBoundingClientRect();
+            const currentPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
             const dist = Vector.magnitude(Vector.sub(currentPos, lastPos));
             if (dist > 8) {
-                const mid = Vector.div(Vector.add(currentPos, lastPos), 2);
                 const angle = Math.atan2(currentPos.y - lastPos.y, currentPos.x - lastPos.x);
-                const segment = Bodies.rectangle(mid.x, mid.y, dist + 2, 7, { isStatic: true, angle: angle, label: 'line', friction: 0.1 });
-                Composite.add(engine.world, segment);
-                ink -= dist;
-                document.getElementById('ink-progress').style.width = Math.max(0, (ink/maxInk)*100) + '%';
+                Composite.add(engine.world, Bodies.rectangle((currentPos.x+lastPos.x)/2, (currentPos.y+lastPos.y)/2, dist+2, 7, { isStatic: true, angle, label: 'line' }));
+                ink -= dist; document.getElementById('ink-progress').style.width = Math.max(0, (ink/maxInk)*100) + '%';
                 lastPos = currentPos;
             }
-        };
+        });
 
-        canvas.addEventListener('mousedown', startDraw);
-        window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('touchstart', startDraw, {passive: false});
-        canvas.addEventListener('touchmove', draw, {passive: false});
-        window.addEventListener('touchend', () => isDrawing = false);
 
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
                 const labels = [pair.bodyA.label, pair.bodyB.label];
                 if (labels.includes('bee') && labels.includes('flower') && !isDone) {
-                    isDone = true; resetBtn.disabled = true;
-                    setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 400);
+                    isDone = true; setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 400);
                 }
             });
         });
 
-        // --- Инициализация и Проверка ---
         window.onload = function() {
-            const decodedName = decode(nameB64);
-            const decodedMsg = decode(msgB64);
-            
-            document.getElementById('nameDisplay').textContent = decodedName;
-            document.getElementById('messageDisplay').textContent = decodedMsg;
+            document.getElementById('nameDisplay').textContent = decode(nameB64);
+            document.getElementById('messageDisplay').textContent = decode(msgB64);
 
             const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
             const calculatedHash = CryptoJS.MD5(checkString).toString();
             
-            // Если хэш совпадает и vip=1 — включаем розовую тему
             if (vip === '1' && calculatedHash === receivedHash) {
                 document.body.setAttribute('data-vip', '1');
             } else {
                 document.body.setAttribute('data-vip', '0');
             }
-            
             run();
         };
     </script>
