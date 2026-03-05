@@ -7,29 +7,27 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Montserrat:wght@300;400&display=swap" rel="stylesheet">
     <style>
-        /* --- ПЕРЕМЕННЫЕ ТЕМ --- */
         :root {
-            /* Стандартная светлая тема */
+            /* СТАНДАРТНАЯ ТЕМА (vip=0) */
+            --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b8860b, #fcf6ba, #aa8954);
             --bg-gradient: radial-gradient(circle at center, #ffffff 0%, #ffe4e1 100%);
             --card-bg: rgba(255, 255, 255, 0.7);
-            --card-border: rgba(212, 175, 55, 0.3);
-            --text-main: #4a4a4a;
-            --text-secondary: #5d5d5d;
-            --gold-gradient: linear-gradient(45deg, #bf953f, #fcf6ba, #b8860b, #fcf6ba, #aa8954);
-            --petal-color: linear-gradient(135deg, #ffcce0 0%, #ffb6c1 100%);
-            --inner-border: rgba(212, 175, 55, 0.4);
+            --text-h1: #4a4a4a;
+            --text-msg: #5d5d5d;
+            --border-inner: rgba(212, 175, 55, 0.3);
+            --petal-bg: linear-gradient(135deg, #ffcce0 0%, #ffb6c1 100%);
+            --card-shadow: 0 25px 50px rgba(0,0,0,0.08), inset 0 0 20px rgba(255,255,255,0.5);
         }
 
-        /* Черно-золотая PREMIUM тема */
-        [data-theme="dark"] {
+        /* ПРЕМИУМ ТЕМА (vip=1) */
+        [data-vip="1"] {
             --bg-gradient: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            --card-bg: rgba(20, 20, 20, 0.85);
-            --card-border: #d4af37;
-            --text-main: #ffffff;
-            --text-secondary: #e0e0e0;
-            --gold-gradient: linear-gradient(45deg, #d4af37, #f2d472, #b8860b, #f2d472, #d4af37);
-            --petal-color: linear-gradient(135deg, #d4af37 0%, #8a6d3b 100%);
-            --inner-border: rgba(212, 175, 55, 0.7);
+            --card-bg: rgba(20, 20, 20, 0.75);
+            --text-h1: #ffffff;
+            --text-msg: #e0e0e0;
+            --border-inner: rgba(212, 175, 55, 0.5);
+            --petal-bg: linear-gradient(135deg, #bf953f 0%, #fcf6ba 100%); /* Золотые лепестки */
+            --card-shadow: 0 25px 50px rgba(0,0,0,0.5), inset 0 0 20px rgba(212,175,55,0.1);
         }
 
         body {
@@ -38,7 +36,7 @@
             background: var(--bg-gradient);
             font-family: 'Montserrat', sans-serif; 
             overflow: hidden; text-align: center;
-            transition: background 1s ease;
+            transition: background 0.5s ease;
         }
 
         .card {
@@ -48,12 +46,13 @@
             border-radius: 30px;
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border: 1px solid var(--card-border);
-            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            border: 1px solid var(--border-inner);
+            box-shadow: var(--card-shadow);
             z-index: 10;
             max-width: 450px;
             width: 85%;
             animation: cardEntrance 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: all 0.5s ease;
         }
 
         @keyframes cardEntrance {
@@ -63,28 +62,29 @@
 
         .card::before {
             content: ""; position: absolute; top: 15px; left: 15px; right: 15px; bottom: 15px;
-            border: 1px solid var(--inner-border); border-radius: 20px;
-            pointer-events: none;
+            border: 1px solid #d4af37; border-radius: 20px;
+            opacity: 0.4; pointer-events: none;
         }
 
         h1 { 
             font-family: 'Playfair Display', serif;
-            color: var(--text-main); font-size: 1.8rem; margin: 0; 
+            color: var(--text-h1); font-size: 1.8rem; margin: 0; 
             letter-spacing: 1px; font-weight: 400;
         }
 
         #nameDisplay { 
             font-family: 'Playfair Display', serif;
-            background: var(--gold-gradient);
+            background: var(--gold);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             font-size: 2.8rem; font-weight: 700; 
             display: block; margin: 15px 0 25px 0;
+            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.05));
         }
         
         #messageDisplay { 
             font-size: 1.1rem; 
-            color: var(--text-secondary); 
+            color: var(--text-msg); 
             line-height: 1.8;
             font-weight: 300;
             white-space: pre-wrap;
@@ -92,10 +92,15 @@
 
         .petal {
             position: absolute; 
-            background: var(--petal-color);
+            background: var(--petal-bg);
             border-radius: 100% 0 100% 0; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             opacity: 0.6;
             pointer-events: none; 
+            /* Вынесли анимацию отдельно, чтобы добавлять класс в JS */
+        }
+
+        .falling {
             animation: fall linear forwards;
         }
 
@@ -127,20 +132,26 @@
 <script>
     // --- Настройки ---
     const SECRET_SALT = "MySuperSecret8March2026";
-    const MUSIC_MAP = {
-        "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-        "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
-    };
+	const MUSIC_MAP = {
+		"1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+		"2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+		"3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+		// --- ДОБАВЛЯЕМ НОВЫЕ ---
+		"4": "https://eu.hitmo-top.com/get/music/20191106/Labrinth_-_Still_Dont_Know_My_Name_67181174.mp3",
+		"5": "https://eu.hitmo-top.com/get/music/20170904/Rihanna_-_Kiss_It_Better_48112885.mp3",
+		"6": "https://eu.hitmo-top.com/get/music/20251107/Aarne_Toxi_Big_Baby_Tape_-_NOBODY_80172673.mp3"
+	};
 
     // --- Параметры ---
     const urlParams = new URLSearchParams(window.location.search);
     const nameB64 = urlParams.get('name') || "";
     const msgB64 = urlParams.get('msg') || "";
     const vip = urlParams.get('vip') || "0";
-    const theme = urlParams.get('theme') || "light"; // Новая тема
     const musicId = urlParams.get('music') || "0";
     const receivedHash = urlParams.get('hash') || "";
+    
+    // ВАЖНО: Добавлено определение темы для правильного расчета хеша
+    const theme = (vip === '1') ? "dark" : "light";
 
     let musicStarted = false;
 
@@ -148,22 +159,27 @@
     function decodeBase64(str) {
         if (!str || str.trim() === "") return null;
         try {
-            let base = str.replace(/-/g, '+').replace(/_/g, '/');
-            while (base.length % 4 !== 0) base += '=';
-            return decodeURIComponent(atob(base).split('').map(function(c) {
-                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-            }).join(''));
+            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4 !== 0) base64 += '=';
+            const binaryString = atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return new TextDecoder("utf-8").decode(bytes);
         } catch (e) { return null; }
     }
 
     function createPetal() {
         const petal = document.createElement('div');
         petal.classList.add('petal');
+        petal.classList.add('falling');
         const size = Math.random() * 12 + 8 + 'px';
         petal.style.width = size;
         petal.style.height = size;
         petal.style.left = Math.random() * 100 + 'vw';
         petal.style.animationDuration = Math.random() * 5 + 5 + 's';
+        petal.style.filter = `blur(${Math.random() * 2}px)`;
         document.body.appendChild(petal);
         setTimeout(() => petal.remove(), 10000);
     }
@@ -172,39 +188,39 @@
         if (!musicStarted && MUSIC_MAP[musicId]) {
             const audio = document.getElementById('bg-music');
             audio.src = MUSIC_MAP[musicId];
-            audio.play().catch(e => console.log("Sound blocked"));
+            audio.play().catch(() => console.log("Нужно взаимодействие для звука"));
             musicStarted = true;
         }
     }
 
-    // --- Инициализация ---
+    // --- Инициализация при загрузке ---
     window.onload = function() {
-        // 1. Проверка безопасности (Теперь включает theme!)
+        // 1. Проверка безопасности (ТЕПЕРЬ С THEME)
         const checkString = nameB64 + msgB64 + vip + musicId + theme + SECRET_SALT;
         const calculatedHash = CryptoJS.MD5(checkString).toString();
         const watermark = document.getElementById('watermark');
 
-        // 2. Установка темы
         if (vip === '1' && calculatedHash === receivedHash) {
+            document.documentElement.setAttribute('data-vip', '1');
             if (watermark) watermark.remove();
-            if (theme === 'dark') {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            }
+            console.log("✅ Premium Active");
         } else {
+            document.documentElement.removeAttribute('data-vip');
             if (watermark) watermark.style.display = 'block';
         }
 
-        // 3. Отображение текста
+        // 2. Отображение текста
         const decodedName = decodeBase64(nameB64);
         document.getElementById('nameDisplay').textContent = decodedName || "Прекрасная Дама";
         
         const decodedMsg = decodeBase64(msgB64);
         if (decodedMsg) document.getElementById('messageDisplay').textContent = decodedMsg;
 
-        // 4. Эффекты
+        // 3. Запуск анимации
         setInterval(createPetal, 400);
     };
 
+    // 4. Запуск музыки при первом клике/касании
     document.body.addEventListener('click', startMusic, { once: true });
     document.body.addEventListener('touchstart', startMusic, { once: true });
 </script>

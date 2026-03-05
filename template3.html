@@ -138,11 +138,15 @@
 <script>
     // --- Настройки ---
     const SECRET_SALT = "MySuperSecret8March2026"; 
-    const MUSIC_MAP = {
-        "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-        "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-        "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
-    };
+	const MUSIC_MAP = {
+		"1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+		"2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+		"3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+		// --- ДОБАВЛЯЕМ НОВЫЕ ---
+		"4": "ССЫЛКА_НА_ТРЕК_4.mp3",
+		"5": "ССЫЛКА_НА_ТРЕК_5.mp3",
+		"6": "ССЫЛКА_НА_ТРЕК_6.mp3"
+	};
 
     const params = new URLSearchParams(window.location.search);
     const nameB64 = params.get('name') || "";
