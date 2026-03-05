@@ -10,29 +10,29 @@
 <style>
         /* БАЗОВЫЕ ПЕРЕМЕННЫЕ */
         :root { 
-            --primary-pink: #ff85a2; 
-            --deep-pink: #d1305c; 
-            --gold: #d4af37; 
             --gold-grad: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
+            --pink-grad: linear-gradient(135deg, #ff758f 0%, #ffb3c1 45%, #ff4d6d 100%);
         }
         
-        /* ОБЫЧНАЯ ТЕМА */
+        /* ОБЫЧНАЯ ТЕМА — ТЕПЕРЬ РОЗОВАЯ */
         body:not([data-vip="1"]), 
         [data-vip="0"] {
-            --bg: #fff5f8 !important;
-            --text: #4a4a4a !important;
+            --bg: #fff0f3 !important;
+            --text: #c9184a !important;
             --glass: rgba(255, 255, 255, 0.8) !important;
+            --accent: #ff4d6d !important;
+            --main-grad: var(--pink-grad) !important;
+            --border-color: #ff85a2 !important;
         }
 
-        /* РОЗОВАЯ VIP ТЕМА */
+        /* VIP ТЕМА — ТЕПЕРЬ ЗОЛОТАЯ */
         [data-vip="1"] {
-            --bg: #fff0f3 !important;
-            --glass: rgba(255, 255, 255, 0.9) !important;
-            --text: #c9184a !important;
-            --primary-pink: #ff758f !important;
-            --deep-pink: #ff4d6d !important;
-            --gold: #ff758f !important;
-            --gold-grad: linear-gradient(135deg, #ff758f 0%, #ffb3c1 45%, #ff4d6d 100%) !important;
+            --bg: #1a1a1a !important; /* Темный премиальный фон для золота */
+            --glass: rgba(40, 40, 40, 0.9) !important;
+            --text: #fcf6ba !important;
+            --accent: #d4af37 !important;
+            --main-grad: var(--gold-grad) !important;
+            --border-color: #d4af37 !important;
         }
 
         /* СКРЫТИЕ ВОТЕРМАРКА ПРИ VIP */
@@ -45,208 +45,149 @@
             font-family: 'Montserrat', sans-serif; 
             background: var(--bg);
             display: flex; justify-content: center; align-items: center;
-            transition: background 0.5s ease;
+            transition: all 0.5s ease;
         }
 
         canvas { 
             display: block; 
-            background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.1)), 
+            background-image: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), 
                               url('https://raw.githubusercontent.com/rykacevn-boop/8march/main/%D0%B7%D0%B0%D0%B3%D1%80%D1%83%D0%B6%D0%B5%D0%BD%D0%BD%D0%BE%D0%B5%20(1).jpg'); 
             background-size: cover;
-            border: 4px solid var(--gold); 
+            border: 4px solid var(--border-color); 
             border-radius: 30px; 
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3); 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
         }
 
-        .gold-text-effect {
-            background: var(--gold-grad);
+        .gradient-text {
+            background: var(--main-grad);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            -webkit-text-stroke: 0.5px rgba(139, 69, 19, 0.3);
             display: inline-block;
-            filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.2));
-        }
-
-        #final-card .gold-text-effect {
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
-            font-weight: 700;
         }
 
         .mission-sidebar {
             position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
             width: 160px; background: var(--glass); padding: 20px;
-            border-radius: 20px; border-left: 5px solid var(--gold);
-            backdrop-filter: blur(10px); z-index: 5;
+            border-radius: 20px; border-left: 5px solid var(--accent);
+            backdrop-filter: blur(10px); z-index: 5; color: var(--text);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
 
         .ink-bar { 
-            width: 220px; height: 14px; background: rgba(255,255,255,0.1); 
-            border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; 
+            width: 200px; height: 12px; background: rgba(0,0,0,0.1); 
+            border-radius: 10px; border: 1.5px solid var(--accent); overflow: hidden; 
         }
         
-        [data-vip="1"] #ink-progress { 
-            background: var(--gold-grad); 
-            box-shadow: 0 0 10px rgba(255, 117, 143, 0.5);
+        #ink-progress { 
+            background: var(--main-grad); 
+            height: 100%;
+            transition: width 0.1s linear;
         }
         
         #reset-btn { 
             position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
-            padding: 14px 35px; background: var(--gold-grad); border: none; color: #000; 
+            padding: 14px 35px; background: var(--main-grad); border: none; color: #000; 
             border-radius: 50px; font-weight: bold; cursor: pointer; z-index: 20; 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 0.9rem; text-transform: uppercase;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 0.9rem;
         }
 
         .card { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             padding: 40px; border-radius: 40px; width: 300px; text-align: center; z-index: 100; 
-            background: var(--glass); border: 2px solid var(--gold); 
-            box-shadow: 0 0 50px rgba(255, 117, 143, 0.3);
-            backdrop-filter: blur(15px);
+            background: var(--glass); border: 2px solid var(--accent); 
+            backdrop-filter: blur(15px); color: var(--text);
         }
         
-        .card-name { font-size: 2.5rem; margin: 15px 0; font-family: 'Playfair Display', serif; }
+        .card-name { font-size: 2.2rem; margin: 15px 0; font-family: 'Playfair Display', serif; display: block; }
 
         #watermark {
-            position: fixed;
-            bottom: 15px;
-            right: 15px;
-            font-family: 'Montserrat', sans-serif; 
-            font-size: 10px;
-            color: rgba(128, 128, 128, 0.5);
+            position: fixed; bottom: 15px; right: 15px;
+            font-size: 10px; color: rgba(128, 128, 128, 0.6);
             z-index: 9999;
-            pointer-events: none;
-            text-align: right;
-        }
-
-        .ui {
-            position: absolute;
-            top: 20px;
-            left: 0;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            z-index: 10;
         }
 
         .ui-card {
-            background: var(--glass);
-            padding: 12px 20px;
-            border-radius: 20px;
-            border: 2px solid var(--gold);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            pointer-events: auto;
-            min-width: 260px;
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            background: var(--glass); padding: 15px 25px;
+            border-radius: 20px; border: 2px solid var(--accent);
+            display: flex; flex-direction: column; align-items: center; z-index: 10;
         }
-
-        .title { font-size: 1.2rem !important; margin-bottom: 8px !important; }
-
-        #reset-btn .btn-icon, .btn-icon {
-            color: #000 !important;
-            -webkit-text-fill-color: #000 !important;
-            font-weight: 900;
-            display: inline-block;
-            vertical-align: middle;
-        }
-        
-        @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
 </head>
 <body>
 
     <div class="mission-sidebar">
-        <h3>Твоя цель:</h3>
-        <p>Нарисуй путь для <b>пчёлки</b>, чтобы она долетела до <b>цветка</b>. Запас волшебной пыльцы ограничен!</p>
+        <h3 style="margin-top:0">Твоя цель:</h3>
+        <p>Нарисуй путь для <b>пчёлки</b>, чтобы она долетела до <b>цветка</b>. Запас пыльцы ограничен!</p>
     </div>
 
-    <div id="canvas-container">
-        <div class="ui">
-            <div class="ui-card">
-                <div class="title gold-text-effect">С Праздником 8 Марта! ✨</div>
-                <div class="ink-container">
-                    <span class="ink-label" style="color: var(--text)">Запас пыльцы 🐝</span>
-                    <div class="ink-bar">
-                        <div id="ink-progress" style="width: 100%;"></div>
-                    </div>
-                </div>
-            </div>
+    <div class="ui-card">
+        <div class="gradient-text" style="font-weight: bold; margin-bottom: 5px;">С Праздником 8 Марта! ✨</div>
+        <div class="ink-bar">
+            <div id="ink-progress" style="width: 100%;"></div>
         </div>
-        <button id="reset-btn" onclick="resetLevel()" disabled>
-        СНАЧАЛА <span class="btn-icon">⟲</span>
-        </button>
-        <canvas id="game"></canvas>
     </div>
+
+    <button id="reset-btn" onclick="resetLevel()" disabled>СНАЧАЛА ⟲</button>
+    <canvas id="game"></canvas>
 
     <div class="card" id="final-card">
-            <h1 class="gold-text-effect" style="margin:0; font-size: 1.2rem;">Для тебя,</h1>
-            <span class="card-name gold-text-effect" id="nameDisplay"></span>
-            <p id="messageDisplay" style="color: var(--text) !important;"></p>
-            <button onclick="resetLevel()" id="final-btn" style="background: var(--gold-grad); color: #000; padding: 15px 30px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 20px;">
-                ПОПРОБОВАТЬ ЕЩЕ ✨
-            </button>
+        <span style="font-size: 1.1rem;">Для тебя,</span>
+        <span class="card-name gradient-text" id="nameDisplay"></span>
+        <p id="messageDisplay" style="line-height: 1.5;"></p>
+        <button onclick="resetLevel()" style="background: var(--main-grad); color: #000; padding: 12px 25px; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 15px;">
+            ЕЩЕ РАЗ ✨
+        </button>
     </div>
 
-    <div id="watermark" style="display: block;">Создано в @postcard_congrat_bot</div>
+    <div id="watermark">Создано в @postcard_congrat_bot</div>
     <audio id="bg-music" loop></audio>
 
     <script>
-        // Секретная соль (должна быть такой же, как в боте)
         const SECRET_SALT = "MySuperSecret8March2026"; 
-        const MUSIC_MAP = {
-            "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
-            "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
-            "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
-        };
-
+        
         const params = new URLSearchParams(window.location.search);
         const nameB64 = params.get('name') || "";
         const msgB64 = params.get('msg') || "";
         const vip = params.get('vip') || "0";
         const musicId = params.get('music') || "0";
-        const theme = params.get('theme') || "light"; // Берем тему из URL
+        const theme = params.get('theme') || "light";
         const receivedHash = params.get('hash') || "";
 
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
 
-        // --- Физика игры ---
+        // --- ФИЗИКА ---
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        const resetBtn = document.getElementById('reset-btn');
         const beeImg = new Image();
         beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
         function resize() {
-            canvas.width = Math.min(window.innerWidth * 0.92, 800);
+            canvas.width = Math.min(window.innerWidth * 0.95, 800);
             canvas.height = Math.min(window.innerHeight * 0.75, 600);
         }
         resize();
 
-        let maxInk = canvas.width * 1.5, ink = maxInk, isDrawing = false, lastPos = null, isDone = false, animationId = null;
+        let maxInk = canvas.width * 1.5, ink = maxInk, isDrawing = false, lastPos = null, isDone = false;
 
         const bee = Bodies.circle(70, 100, 25, { restitution: 0.3, label: 'bee', isStatic: true });
         const flower = Bodies.circle(canvas.width - 70, canvas.height - 110, 35, { isStatic: true, label: 'flower' });
         Composite.add(engine.world, [bee, flower, Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true })]);
 
         function resetLevel() {
-            if (animationId) cancelAnimationFrame(animationId);
-            resetBtn.disabled = true; isDone = false; isDrawing = false;
-            document.getElementById('final-card').style.display = 'none';
+            isDone = false; document.getElementById('final-card').style.display = 'none';
+            document.getElementById('reset-btn').disabled = true;
             Composite.allBodies(engine.world).forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
             Body.setStatic(bee, true); Body.setPosition(bee, { x: 70, y: 100 }); Body.setVelocity(bee, { x: 0, y: 0 });
             ink = maxInk; document.getElementById('ink-progress').style.width = '100%';
-            run();
         }
 
         function run() {
-            if (isDone) return; 
             Engine.update(engine);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            const accent = getComputedStyle(document.body).getPropertyValue('--gold').trim();
+            const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim();
 
             Composite.allBodies(engine.world).forEach(body => {
                 if (body.label === 'line') {
@@ -258,49 +199,45 @@
                     ctx.rotate(body.angle); ctx.drawImage(beeImg, -30, -30, 60, 60); ctx.restore();
                 }
             });
-            ctx.font = '58px Arial'; ctx.fillText('🌸', flower.position.x - 30, flower.position.y + 20);
-            animationId = requestAnimationFrame(run);
+            ctx.font = '50px Arial'; ctx.fillText('🌸', flower.position.x - 25, flower.position.y + 20);
+            requestAnimationFrame(run);
         }
 
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true; const rect = canvas.getBoundingClientRect();
-            lastPos = { x: (e.clientX || e.touches[0].clientX) - rect.left, y: (e.clientY || e.touches[0].clientY) - rect.top };
-            if (bee.isStatic) { Body.setStatic(bee, false); resetBtn.disabled = false; }
+            lastPos = { x: (e.clientX || e.touches?.[0].clientX) - rect.left, y: (e.clientY || e.touches?.[0].clientY) - rect.top };
+            if (bee.isStatic) { Body.setStatic(bee, false); document.getElementById('reset-btn').disabled = false; }
         });
 
         window.addEventListener('mousemove', (e) => {
             if (!isDrawing || ink <= 0 || isDone) return;
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
-            const currentPos = { x: clientX - rect.left, y: clientY - rect.top };
-            const dist = Vector.magnitude(Vector.sub(currentPos, lastPos));
-            if (dist > 8) {
-                const angle = Math.atan2(currentPos.y - lastPos.y, currentPos.x - lastPos.x);
-                Composite.add(engine.world, Bodies.rectangle((currentPos.x+lastPos.x)/2, (currentPos.y+lastPos.y)/2, dist+2, 7, { isStatic: true, angle, label: 'line' }));
-                ink -= dist; document.getElementById('ink-progress').style.width = Math.max(0, (ink/maxInk)*100) + '%';
-                lastPos = currentPos;
+            const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
+            const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+            const dist = Vector.magnitude(Vector.sub({x, y}, lastPos));
+            if (dist > 10) {
+                const angle = Math.atan2(y - lastPos.y, x - lastPos.x);
+                Composite.add(engine.world, Bodies.rectangle((x+lastPos.x)/2, (y+lastPos.y)/2, dist+2, 6, { isStatic: true, angle, label: 'line' }));
+                ink -= dist; document.getElementById('ink-progress').style.width = (ink/maxInk)*100 + '%';
+                lastPos = {x, y};
             }
         });
 
         window.addEventListener('mouseup', () => isDrawing = false);
-        window.addEventListener('touchend', () => isDrawing = false);
 
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
-                const labels = [pair.bodyA.label, pair.bodyB.label];
-                if (labels.includes('bee') && labels.includes('flower') && !isDone) {
-                    isDone = true; setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 400);
+                if ((pair.bodyA.label === 'bee' && pair.bodyB.label === 'flower') || (pair.bodyB.label === 'bee' && pair.bodyA.label === 'flower')) {
+                    if (!isDone) { isDone = true; setTimeout(() => document.getElementById('final-card').style.display = 'block', 500); }
                 }
             });
         });
 
-        window.onload = function() {
+        window.onload = () => {
             document.getElementById('nameDisplay').textContent = decode(nameB64);
             document.getElementById('messageDisplay').textContent = decode(msgB64);
 
-            // ПРОВЕРКА ХЕША (Теперь в точности как в боте)
-            // hash_str = f"{name_b64}{msg_b64}{is_vip}{music_id}{theme}{SECRET_SALT}"
+            // Проверка хеша (строго как в Python)
             const checkString = nameB64 + msgB64 + vip + musicId + theme + SECRET_SALT;
             const calculatedHash = CryptoJS.MD5(checkString).toString();
             
