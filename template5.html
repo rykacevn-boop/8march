@@ -7,39 +7,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Королевский сад 8 Марта</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* ПЕРЕМЕННЫЕ ПО УМОЛЧАНИЮ (VIP 0) */
-        :root {
-            --bg: #fff5f8;
-            --text: #4a4a4a;
-            --glass: rgba(255, 255, 255, 0.8);
-            --gold: #d4af37;
+<style>
+        /* БАЗОВЫЕ ПЕРЕМЕННЫЕ */
+        :root { 
+            --primary-pink: #ff85a2; 
+            --deep-pink: #d1305c; 
+            --gold: #d4af37; 
             --gold-grad: linear-gradient(135deg, #d4af37 0%, #fcf6ba 45%, #b8860b 100%);
-            --shadow: rgba(0, 0, 0, 0.1);
-            --wm-display: block; /* Вотермарка видна */
+        }
+        
+        /* ЯВНАЯ ОБЫЧНАЯ ТЕМА */
+        body:not([data-vip="1"]), 
+        [data-vip="0"] {
+            --bg: #fff5f8 !important;
+            --text: #4a4a4a !important;
+            --glass: rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* ПРЕМИУМ ПЕРЕМЕННЫЕ (VIP 1) */
+        /* ПРЕМИУМ ТЕМА (VIP) */
         [data-vip="1"] {
-            --bg: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
-            --text: #ffffff;
-            --glass: rgba(30, 30, 30, 0.9);
-            --shadow: rgba(212, 175, 55, 0.3);
-            --wm-display: none; /* Вотермарка скрыта */
+            --bg: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%) !important;
+            --glass: rgba(30, 30, 30, 0.9) !important;
+            --text: #ffffff !important;
+            --primary-pink: #d4af37 !important;
+            --deep-pink: #fcf6ba !important;
         }
 
         body { 
             margin: 0; padding: 0; height: 100vh; overflow: hidden; 
             font-family: 'Montserrat', sans-serif; 
-            background: var(--bg); color: var(--text);
+            background: var(--bg);
             display: flex; justify-content: center; align-items: center;
             transition: background 0.5s ease;
-        }
-
-        /* КОНТЕЙНЕР ИГРЫ */
-        #canvas-container {
-            position: relative; /* Чтобы UI прилипал к игре, а не к экрану */
-            display: flex; justify-content: center; align-items: center;
         }
 
         canvas { 
@@ -49,195 +48,370 @@
             background-size: cover;
             border: 4px solid var(--gold); 
             border-radius: 30px; 
-            box-shadow: 0 25px 50px var(--shadow); 
-        }
-
-        /* ВЕРХНЯЯ ПАНЕЛЬ (ЦЕНТРОВКА) */
-        .ui-wrapper {
-            position: absolute; top: 20px; left: 0; width: 100%;
-            display: flex; justify-content: center; pointer-events: none; z-index: 10;
-        }
-
-        .ui-card {
-            background: var(--glass); backdrop-filter: blur(10px);
-            padding: 12px 20px; border-radius: 20px; border: 2px solid var(--gold);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-            pointer-events: auto; min-width: 260px; text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3); 
         }
 
         .gold-text-effect {
-            background: var(--gold-grad); -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent; display: inline-block;
+            background: var(--gold-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            -webkit-text-stroke: 0.5px rgba(139, 69, 19, 0.3);
+            display: inline-block;
+            filter: drop-shadow(0px 1px 1px rgba(0, 0, 0, 0.2));
         }
 
-        /* ВОТЕРМАРКА */
-        #watermark {
-            position: fixed; bottom: 15px; right: 15px;
-            font-size: 10px; color: rgba(128, 128, 128, 0.5);
-            display: var(--wm-display); /* Зависит от VIP */
-            z-index: 9999;
+        #final-card .gold-text-effect {
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+            font-weight: 700;
         }
 
-        /* ШКАЛА ПЫЛЬЦЫ */
+        .mission-sidebar {
+            position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+            width: 160px; background: var(--glass); padding: 20px;
+            border-radius: 20px; border-left: 5px solid var(--gold);
+            backdrop-filter: blur(10px); z-index: 5;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
         .ink-bar { 
-            width: 100%; height: 10px; background: rgba(0,0,0,0.1); 
-            border-radius: 10px; border: 1px solid var(--gold); overflow: hidden; margin-top: 5px;
+            width: 220px; height: 14px; background: rgba(255,255,255,0.1); 
+            border-radius: 10px; border: 1.5px solid var(--gold); overflow: hidden; 
         }
-        #ink-progress { height: 100%; background: var(--gold-grad); transition: width 0.1s; }
+        
+        [data-vip="1"] #ink-progress { 
+            background: var(--gold-grad); 
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+        }
+        
+        [data-vip="1"] #final-card .gold-text-effect {
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+        }
 
-        /* КНОПКИ */
-        #reset-btn {
-            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-            padding: 12px 30px; background: var(--gold-grad); border: none;
-            border-radius: 50px; font-weight: bold; cursor: pointer; z-index: 20;
+        #reset-btn { 
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); 
+            padding: 14px 35px; background: var(--gold-grad); border: none; color: #000; 
+            border-radius: 50px; font-weight: bold; cursor: pointer; z-index: 20; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); font-size: 0.9rem; text-transform: uppercase;
         }
-        #reset-btn:disabled { opacity: 0.5; }
 
         .card { 
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             padding: 40px; border-radius: 40px; width: 300px; text-align: center; z-index: 100; 
-            background: var(--glass); border: 2px solid var(--gold); backdrop-filter: blur(15px);
-            box-shadow: 0 0 50px var(--shadow);
+            background: var(--glass); border: 2px solid var(--gold); 
+            box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+            backdrop-filter: blur(15px);
+        }
+        
+        .card-name { font-size: 2.5rem; margin: 15px 0; font-family: 'Playfair Display', serif; }
+
+        .btn-icon {
+            background: var(--gold-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.2rem;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+        
+        .btn-reset .btn-icon {
+            color: #000; 
+            -webkit-text-fill-color: initial;
+            background: none;
+            font-size: 1.1rem;
+            vertical-align: middle;
+            margin-left: 5px;
         }
 
+        [data-vip="1"] .btn-reset .btn-icon {
+            background: var(--gold-grad);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        #watermark {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            font-family: 'Montserrat', sans-serif; 
+            font-size: 10px;
+            letter-spacing: 0.5px;
+            color: rgba(128, 128, 128, 0.5);
+            z-index: 9999;
+            pointer-events: none;
+            text-align: right;
+        }
+
+        [data-vip="1"] #watermark {
+            display: none !important;
+        }
+
+        .ui {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            z-index: 10;
+            margin: 0;
+        }
+
+        .ui-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 20px;
+            border: 2px solid var(--gold);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            pointer-events: auto;
+            min-width: 260px;
+            max-width: 90vw;
+        }
+
+        .title {
+            margin: 0 0 8px 0 !important;
+            font-size: 1.2rem !important;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .ink-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ink-bar {
+            width: 200px;
+            height: 10px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+            border: 1px solid var(--gold);
+            overflow: hidden;
+        }
+        
+        #reset-btn .btn-icon, 
+        #final-btn .btn-icon,
+        .btn-icon {
+            color: #000 !important;
+            -webkit-text-fill-color: #000 !important;
+            background: none !important;
+            -webkit-background-clip: initial !important; 
+            font-weight: 900;
+            display: inline-block;
+            vertical-align: middle;
+            filter: none !important;
+        }
+        
         @media (max-width: 950px) { .mission-sidebar { display: none; } }
     </style>
 </head>
-<body data-vip="0">
+<body>
 
-    <div class="ui-wrapper">
-        <div class="ui-card">
-            <div class="gold-text-effect" style="font-size: 1.1rem; font-weight: bold;">С Праздником 8 Марта! ✨</div>
-            <div style="font-size: 0.8rem; margin-top: 5px;">Запас пыльцы 🐝</div>
-            <div class="ink-bar"><div id="ink-progress" style="width: 100%;"></div></div>
-        </div>
+    <div class="mission-sidebar">
+        <h3>Твоя цель:</h3>
+        <p>Нарисуй путь для <b>пчёлки</b>, чтобы она долетела до <b>цветка</b>. Запас волшебной пыльцы ограничен!</p>
     </div>
 
     <div id="canvas-container">
-        <button id="reset-btn" onclick="resetLevel()" disabled>СНАЧАЛА ⟲</button>
+        <div class="ui">
+            <div class="ui-card">
+                <div class="title gold-text-effect">С Праздником 8 Марта! ✨</div>
+                <div class="ink-container">
+                    <span class="ink-label">Запас пыльцы 🐝</span>
+                    <div class="ink-bar">
+                        <div id="ink-progress" style="width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="reset-btn" onclick="resetLevel()" disabled>
+        СНАЧАЛА <span class="btn-icon">⟲</span>
+        </button>
         <canvas id="game"></canvas>
     </div>
 
     <div class="card" id="final-card">
-        <h1 class="gold-text-effect" style="font-size: 1.2rem;">Для тебя,</h1>
-        <div id="nameDisplay" class="gold-text-effect" style="font-size: 2rem; display: block; margin: 10px 0;"></div>
-        <p id="messageDisplay"></p>
-        <button onclick="resetLevel()" style="background: var(--gold-grad); padding: 12px 25px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 15px;">ЕЩЕ РАЗ ✨</button>
+            <h1 class="gold-text-effect" style="margin:0; font-size: 1.2rem;">Для тебя,</h1>
+            <span class="card-name gold-text-effect" id="nameDisplay"></span>
+            <p id="messageDisplay" style="color: var(--text) !important;"></p>
+            <button onclick="resetLevel()" id="final-btn" style="background: var(--gold-grad); color: #000; padding: 15px 30px; border: none; border-radius: 15px; font-weight: bold; cursor: pointer; margin-top: 20px;">
+                ПОПРОБОВАТЬ ЕЩЕ ✨
+            </button>
     </div>
 
     <div id="watermark">Создано в @postcard_congrat_bot</div>
     <audio id="bg-music" loop></audio>
 
     <script>
-        const SECRET_SALT = "MySuperSecret8March2026";
+        // --- Настройки и Музыка ---
+        const SECRET_SALT = "MySuperSecret8March2026"; 
+        const MUSIC_MAP = {
+            "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3"
+        };
+
         const params = new URLSearchParams(window.location.search);
-        
-        // --- ЛОГИКА VIP И ДЕКОДИРОВАНИЕ ---
         const nameB64 = params.get('name') || "";
         const msgB64 = params.get('msg') || "";
         const vip = params.get('vip') || "0";
         const musicId = params.get('music') || "0";
         const receivedHash = params.get('hash') || "";
 
-        function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
-
-        // Проверка хэша
-        const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
-        const calculatedHash = CryptoJS.MD5(checkString).toString();
-
-        if (vip === "1" && calculatedHash === receivedHash) {
-            document.body.setAttribute('data-vip', '1');
+        let musicStarted = false;
+        function startMusic() {
+            if (!musicStarted && MUSIC_MAP[musicId]) {
+                const audio = document.getElementById('bg-music');
+                audio.src = MUSIC_MAP[musicId];
+                audio.play().catch(() => console.log("Audio play blocked by browser"));
+                musicStarted = true;
+            }
         }
 
-        document.getElementById('nameDisplay').textContent = decode(nameB64);
-        document.getElementById('messageDisplay').textContent = decode(msgB64);
+        function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
 
-        // --- ИГРОВАЯ ЛОГИКА (Matter.js) ---
+        // --- Физика игры ---
         const { Engine, Bodies, Composite, Events, Vector, Body } = Matter;
         const engine = Engine.create();
+        engine.gravity.y = 0.55; 
+
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        const beeImg = new Image(); beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
+        const resetBtn = document.getElementById('reset-btn');
+        const beeImg = new Image();
+        beeImg.src = 'https://raw.githubusercontent.com/rykacevn-boop/8march/main/image-Photoroom%20(18).png';
 
         function resize() {
-            canvas.width = Math.min(window.innerWidth * 0.95, 800);
-            canvas.height = Math.min(window.innerHeight * 0.7, 600);
+            canvas.width = Math.min(window.innerWidth * 0.92, 800);
+            canvas.height = Math.min(window.innerHeight * 0.75, 600);
         }
         resize();
 
-        let maxInk = canvas.width * 1.5, ink = maxInk, isDrawing = false, lastPos = null, isDone = false;
+        let maxInk = canvas.width * 1.5;
+        let ink = maxInk;
+        let isDrawing = false, lastPos = null, isDone = false, animationId = null;
 
-        const bee = Bodies.circle(70, 100, 25, { restitution: 0.3, label: 'bee', isStatic: true });
+        const bee = Bodies.circle(70, 100, 25, { restitution: 0.3, friction: 0.1, label: 'bee', isStatic: true, inertia: Infinity });
         const flower = Bodies.circle(canvas.width - 70, canvas.height - 110, 35, { isStatic: true, label: 'flower' });
-        Composite.add(engine.world, [bee, flower, Bodies.rectangle(canvas.width/2, canvas.height+15, canvas.width, 30, {isStatic:true})]);
+        const ground = Bodies.rectangle(canvas.width/2, canvas.height + 15, canvas.width, 30, { isStatic: true });
+        Composite.add(engine.world, [bee, flower, ground]);
 
         function resetLevel() {
-            isDone = false; isDrawing = false; ink = maxInk;
+            if (animationId) cancelAnimationFrame(animationId);
+            resetBtn.disabled = true;
+            isDone = false; isDrawing = false;
             document.getElementById('final-card').style.display = 'none';
-            document.getElementById('reset-btn').disabled = true;
-            document.getElementById('ink-progress').style.width = '100%';
             Composite.allBodies(engine.world).forEach(b => { if(b.label === 'line') Composite.remove(engine.world, b); });
-            Body.setStatic(bee, true); Body.setPosition(bee, { x: 70, y: 100 }); Body.setVelocity(bee, { x: 0, y: 0 });
+            Body.setStatic(bee, true);
+            Body.setPosition(bee, { x: 70, y: 100 });
+            Body.setVelocity(bee, { x: 0, y: 0 });
+            Body.setAngle(bee, 0);
+            ink = maxInk;
+            document.getElementById('ink-progress').style.width = '100%';
+            run();
         }
 
         function run() {
-            if (!isDone) {
-                Engine.update(engine);
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                Composite.allBodies(engine.world).forEach(body => {
-                    if (body.label === 'line') {
-                        ctx.beginPath(); body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
-                        ctx.fillStyle = '#d4af37'; ctx.fill();
-                    }
-                    if (body.label === 'bee') {
-                        ctx.save(); ctx.translate(body.position.x, body.position.y);
-                        ctx.rotate(body.angle); ctx.drawImage(beeImg, -30, -30, 60, 60); ctx.restore();
-                    }
-                });
-                ctx.font = '50px Arial'; ctx.fillText('🌸', flower.position.x - 25, flower.position.y + 20);
-                requestAnimationFrame(run);
-            }
+            if (isDone) return; 
+            Engine.update(engine);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            Composite.allBodies(engine.world).forEach(body => {
+                if (body.label === 'line') {
+                    ctx.beginPath();
+                    body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
+                    ctx.fillStyle = '#d4af37';
+                    ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
+                    ctx.fill(); ctx.shadowBlur = 0;
+                }
+                if (body.label === 'bee') {
+                    ctx.save(); ctx.translate(body.position.x, body.position.y);
+                    ctx.rotate(body.angle); ctx.drawImage(beeImg, -30, -30, 60, 60);
+                    ctx.restore();
+                }
+            });
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.font = '58px Arial';
+            ctx.fillText('🌸', flower.position.x, flower.position.y);
+            animationId = requestAnimationFrame(run);
         }
 
-        const getPos = (e) => {
+        function getPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
-            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            const clientX = e.clientX ?? (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY ?? (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
             return { x: clientX - rect.left, y: clientY - rect.top };
+        }
+
+        const startDraw = (e) => {
+            if (isDone) return;
+            startMusic(); 
+            isDrawing = true; lastPos = getPos(e);
+            if (bee.isStatic) { Body.setStatic(bee, false); resetBtn.disabled = false; }
+            if(e.cancelable) e.preventDefault();
         };
 
-        canvas.addEventListener('mousedown', (e) => {
-            if (isDone) return;
-            isDrawing = true; lastPos = getPos(e);
-            if (bee.isStatic) { Body.setStatic(bee, false); document.getElementById('reset-btn').disabled = false; }
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!isDrawing || ink <= 0) return;
+        const draw = (e) => {
+            if (!isDrawing || ink <= 0 || isDone) return;
             const currentPos = getPos(e);
+            if (!lastPos) return;
             const dist = Vector.magnitude(Vector.sub(currentPos, lastPos));
-            if (dist > 10) {
+            if (dist > 8) {
+                const mid = Vector.div(Vector.add(currentPos, lastPos), 2);
                 const angle = Math.atan2(currentPos.y - lastPos.y, currentPos.x - lastPos.x);
-                const line = Bodies.rectangle((currentPos.x + lastPos.x)/2, (currentPos.y + lastPos.y)/2, dist+2, 6, { isStatic: true, angle, label: 'line' });
-                Composite.add(engine.world, line);
+                const segment = Bodies.rectangle(mid.x, mid.y, dist + 2, 7, { isStatic: true, angle: angle, label: 'line', friction: 0.1 });
+                Composite.add(engine.world, segment);
                 ink -= dist;
-                document.getElementById('ink-progress').style.width = (ink/maxInk)*100 + '%';
+                document.getElementById('ink-progress').style.width = Math.max(0, (ink/maxInk)*100) + '%';
                 lastPos = currentPos;
             }
-        });
+        };
 
+        canvas.addEventListener('mousedown', startDraw);
+        window.addEventListener('mousemove', draw);
         window.addEventListener('mouseup', () => isDrawing = false);
-        
+        canvas.addEventListener('touchstart', startDraw, {passive: false});
+        canvas.addEventListener('touchmove', draw, {passive: false});
+        window.addEventListener('touchend', () => isDrawing = false);
+
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
-                if ([pair.bodyA.label, pair.bodyB.label].includes('bee') && [pair.bodyA.label, pair.bodyB.label].includes('flower')) {
-                    isDone = true;
-                    setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 500);
+                const labels = [pair.bodyA.label, pair.bodyB.label];
+                if (labels.includes('bee') && labels.includes('flower') && !isDone) {
+                    isDone = true; resetBtn.disabled = true;
+                    setTimeout(() => { document.getElementById('final-card').style.display = 'block'; }, 400);
                 }
             });
         });
 
-        run();
+        // --- Инициализация и Проверка ---
+        window.onload = function() {
+            const decodedName = decode(nameB64);
+            const decodedMsg = decode(msgB64);
+            
+            document.getElementById('nameDisplay').textContent = decodedName;
+            document.getElementById('messageDisplay').textContent = decodedMsg;
+
+            const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
+            const calculatedHash = CryptoJS.MD5(checkString).toString();
+            
+            if (vip === '1' && calculatedHash === receivedHash) {
+                document.body.setAttribute('data-vip', '1');
+            } else {
+                document.body.setAttribute('data-vip', '0');
+                const wm = document.getElementById('watermark');
+                if (wm) wm.style.display = 'block';
+            }
+            
+            run();
+        };
     </script>
 </body>
 </html>
