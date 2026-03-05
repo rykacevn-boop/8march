@@ -262,18 +262,28 @@
             requestAnimationFrame(run);
         }
 
-        canvas.addEventListener('mousedown', (e) => {
-			startMusic();
-            isDrawing = true; const rect = canvas.getBoundingClientRect();
-            lastPos = { x: (e.clientX || e.touches?.[0].clientX) - rect.left, y: (e.clientY || e.touches?.[0].clientY) - rect.top };
+// --- УПРАВЛЕНИЕ ДЛЯ ПК И ТЕЛЕФОНОВ ---
+        const startDraw = (e) => {
+            startMusic();
+            isDrawing = true; 
+            const rect = canvas.getBoundingClientRect();
+            // Определяем, мышка это или палец
+            const clientX = e.clientX ?? e.touches[0].clientX;
+            const clientY = e.clientY ?? e.touches[0].clientY;
+            
+            lastPos = { x: clientX - rect.left, y: clientY - rect.top };
             if (bee.isStatic) { Body.setStatic(bee, false); document.getElementById('reset-btn').disabled = false; }
-        });
+            if (e.cancelable) e.preventDefault(); // Блокируем скролл экрана при касании холста
+        };
 
-        window.addEventListener('mousemove', (e) => {
+        const draw = (e) => {
             if (!isDrawing || ink <= 0 || isDone) return;
             const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX || e.touches?.[0].clientX) - rect.left;
-            const y = (e.clientY || e.touches?.[0].clientY) - rect.top;
+            const clientX = e.clientX ?? e.touches[0].clientX;
+            const clientY = e.clientY ?? e.touches[0].clientY;
+            const x = clientX - rect.left;
+            const y = clientY - rect.top;
+            
             const dist = Vector.magnitude(Vector.sub({x, y}, lastPos));
             if (dist > 10) {
                 const angle = Math.atan2(y - lastPos.y, x - lastPos.x);
@@ -281,13 +291,21 @@
                 ink -= dist; document.getElementById('ink-progress').style.width = (ink/maxInk)*100 + '%';
                 lastPos = {x, y};
             }
-        });
+            if (e.cancelable) e.preventDefault(); // Блокируем скролл экрана при рисовании
+        };
 
-        window.addEventListener('mouseup', () => isDrawing = false);
+        const stopDraw = () => isDrawing = false;
 
-		canvas.addEventListener('touchstart', () => {
-					startMusic();
-				}, {passive: true});
+        // Подключаем мышку (ПК)
+        canvas.addEventListener('mousedown', startDraw);
+        window.addEventListener('mousemove', draw, {passive: false});
+        window.addEventListener('mouseup', stopDraw);
+
+        // Подключаем пальцы (Телефоны)
+        canvas.addEventListener('touchstart', startDraw, {passive: false});
+        window.addEventListener('touchmove', draw, {passive: false});
+        window.addEventListener('touchend', stopDraw);
+        // -------------------------------------
 
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
