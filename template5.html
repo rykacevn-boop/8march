@@ -143,9 +143,19 @@
     <div id="watermark">Создано в @postcard_congrat_bot</div>
     <audio id="bg-music" loop></audio>
 
-    <script>
+	<script>
         const SECRET_SALT = "MySuperSecret8March2026"; 
         
+        // 1. Добавь мапу с твоими рабочими ссылками
+        const MUSIC_MAP = {
+            "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+            "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+            "3": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+            "4": "https://raw.githubusercontent.com/rykacevn-boop/8march/main/Labrinth_-_Still_Dont_Know_My_Name_67181174.mp3",
+            "5": "https://raw.githubusercontent.com/rykacevn-boop/8march/main/Rihanna_-_Kiss_It_Better_48112885.mp3",
+            "6": "https://raw.githubusercontent.com/rykacevn-boop/8march/main/Aarne_Toxi_Big_Baby_Tape_-_NOBODY_80172673.mp3"
+        };
+
         const params = new URLSearchParams(window.location.search);
         const nameB64 = params.get('name') || "";
         const msgB64 = params.get('msg') || "";
@@ -153,6 +163,17 @@
         const musicId = params.get('music') || "0";
         const theme = params.get('theme') || "light";
         const receivedHash = params.get('hash') || "";
+
+        // 2. Логика запуска музыки
+        let musicStarted = false;
+        function startMusic() {
+            if (!musicStarted && MUSIC_MAP[musicId]) {
+                const audio = document.getElementById('bg-music');
+                audio.src = MUSIC_MAP[musicId];
+                audio.play().catch(e => console.log("Браузер заблокировал автоплей"));
+                musicStarted = true;
+            }
+        }
 
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
 
@@ -204,6 +225,7 @@
         }
 
         canvas.addEventListener('mousedown', (e) => {
+			startMusic();
             isDrawing = true; const rect = canvas.getBoundingClientRect();
             lastPos = { x: (e.clientX || e.touches?.[0].clientX) - rect.left, y: (e.clientY || e.touches?.[0].clientY) - rect.top };
             if (bee.isStatic) { Body.setStatic(bee, false); document.getElementById('reset-btn').disabled = false; }
@@ -224,6 +246,10 @@
         });
 
         window.addEventListener('mouseup', () => isDrawing = false);
+
+		canvas.addEventListener('touchstart', () => {
+					startMusic();
+				}, {passive: true});
 
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
