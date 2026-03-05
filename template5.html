@@ -26,12 +26,12 @@
 
         /* РОЗОВАЯ VIP ТЕМА */
         [data-vip="1"] {
-            --bg: #fff0f3 !important; /* Светло-розовый фон */
+            --bg: #fff0f3 !important;
             --glass: rgba(255, 255, 255, 0.9) !important;
-            --text: #c9184a !important; /* Малиновый текст */
+            --text: #c9184a !important;
             --primary-pink: #ff758f !important;
             --deep-pink: #ff4d6d !important;
-            --gold: #ff758f !important; /* Розовый вместо золотого в границах */
+            --gold: #ff758f !important;
             --gold-grad: linear-gradient(135deg, #ff758f 0%, #ffb3c1 45%, #ff4d6d 100%) !important;
         }
 
@@ -193,7 +193,8 @@
     <audio id="bg-music" loop></audio>
 
     <script>
-        const SECRET_SALT = "MySuperSecret8March2026";
+        // Секретная соль (должна быть такой же, как в боте)
+        const SECRET_SALT = "MySuperSecret8March2026"; 
         const MUSIC_MAP = {
             "1": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
             "2": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
@@ -205,6 +206,7 @@
         const msgB64 = params.get('msg') || "";
         const vip = params.get('vip') || "0";
         const musicId = params.get('music') || "0";
+        const theme = params.get('theme') || "light"; // Берем тему из URL
         const receivedHash = params.get('hash') || "";
 
         function decode(s) { try { return new TextDecoder().decode(Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0))); } catch(e) { return "Прекрасной леди"; } }
@@ -262,14 +264,16 @@
 
         canvas.addEventListener('mousedown', (e) => {
             isDrawing = true; const rect = canvas.getBoundingClientRect();
-            lastPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            lastPos = { x: (e.clientX || e.touches[0].clientX) - rect.left, y: (e.clientY || e.touches[0].clientY) - rect.top };
             if (bee.isStatic) { Body.setStatic(bee, false); resetBtn.disabled = false; }
         });
 
         window.addEventListener('mousemove', (e) => {
             if (!isDrawing || ink <= 0 || isDone) return;
             const rect = canvas.getBoundingClientRect();
-            const currentPos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+            const clientX = e.clientX || (e.touches ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches ? e.touches[0].clientY : 0);
+            const currentPos = { x: clientX - rect.left, y: clientY - rect.top };
             const dist = Vector.magnitude(Vector.sub(currentPos, lastPos));
             if (dist > 8) {
                 const angle = Math.atan2(currentPos.y - lastPos.y, currentPos.x - lastPos.x);
@@ -280,6 +284,7 @@
         });
 
         window.addEventListener('mouseup', () => isDrawing = false);
+        window.addEventListener('touchend', () => isDrawing = false);
 
         Events.on(engine, 'collisionStart', (event) => {
             event.pairs.forEach(pair => {
@@ -294,7 +299,9 @@
             document.getElementById('nameDisplay').textContent = decode(nameB64);
             document.getElementById('messageDisplay').textContent = decode(msgB64);
 
-            const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
+            // ПРОВЕРКА ХЕША (Теперь в точности как в боте)
+            // hash_str = f"{name_b64}{msg_b64}{is_vip}{music_id}{theme}{SECRET_SALT}"
+            const checkString = nameB64 + msgB64 + vip + musicId + theme + SECRET_SALT;
             const calculatedHash = CryptoJS.MD5(checkString).toString();
             
             if (vip === '1' && calculatedHash === receivedHash) {
