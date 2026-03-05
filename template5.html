@@ -24,13 +24,15 @@
             --glass: rgba(255, 255, 255, 0.8) !important;
         }
 
-        /* ПРЕМИУМ ТЕМА (VIP) */
+        /* ПРЕМИУМ ТЕМА (VIP) - ТЕПЕРЬ РОЗОВАЯ */
         [data-vip="1"] {
-            --bg: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%) !important;
-            --glass: rgba(30, 30, 30, 0.9) !important;
-            --text: #ffffff !important;
-            --primary-pink: #d4af37 !important;
-            --deep-pink: #fcf6ba !important;
+            --bg: #ffeef2 !important; /* Светло-розовый фон */
+            --glass: rgba(255, 255, 255, 0.9) !important;
+            --text: #c9184a !important; /* Насыщенный розовый текст */
+            --primary-pink: #ff85a2 !important;
+            --deep-pink: #d1305c !important;
+            --gold: #ff4d6d !important; /* Розовый акцент вместо золотого */
+            --gold-grad: linear-gradient(135deg, #ff758f 0%, #ffb3c1 45%, #ff4d6d 100%) !important;
         }
 
         body { 
@@ -80,11 +82,11 @@
         
         [data-vip="1"] #ink-progress { 
             background: var(--gold-grad); 
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+            box-shadow: 0 0 10px rgba(255, 117, 143, 0.5);
         }
         
         [data-vip="1"] #final-card .gold-text-effect {
-            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+            filter: drop-shadow(0 0 8px rgba(255, 117, 143, 0.4));
         }
 
         #reset-btn { 
@@ -98,7 +100,7 @@
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
             padding: 40px; border-radius: 40px; width: 300px; text-align: center; z-index: 100; 
             background: var(--glass); border: 2px solid var(--gold); 
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+            box-shadow: 0 0 50px rgba(255, 117, 143, 0.3);
             backdrop-filter: blur(15px);
         }
         
@@ -140,8 +142,10 @@
             z-index: 9999;
             pointer-events: none;
             text-align: right;
+            display: block; /* По умолчанию виден */
         }
 
+        /* СКРЫВАЕМ ПРИ VIP=1 */
         [data-vip="1"] #watermark {
             display: none !important;
         }
@@ -226,7 +230,7 @@
             <div class="ui-card">
                 <div class="title gold-text-effect">С Праздником 8 Марта! ✨</div>
                 <div class="ink-container">
-                    <span class="ink-label">Запас пыльцы 🐝</span>
+                    <span class="ink-label" style="color: var(--text)">Запас пыльцы 🐝</span>
                     <div class="ink-bar">
                         <div id="ink-progress" style="width: 100%;"></div>
                     </div>
@@ -324,12 +328,16 @@
             if (isDone) return; 
             Engine.update(engine);
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Получаем цвет для линий из CSS переменной
+            const lineColor = getComputedStyle(document.body).getPropertyValue('--gold').trim();
+
             Composite.allBodies(engine.world).forEach(body => {
                 if (body.label === 'line') {
                     ctx.beginPath();
                     body.vertices.forEach(v => ctx.lineTo(v.x, v.y));
-                    ctx.fillStyle = '#d4af37';
-                    ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(212, 175, 55, 0.6)';
+                    ctx.fillStyle = lineColor;
+                    ctx.shadowBlur = 8; ctx.shadowColor = lineColor;
                     ctx.fill(); ctx.shadowBlur = 0;
                 }
                 if (body.label === 'bee') {
@@ -402,12 +410,11 @@
             const checkString = nameB64 + msgB64 + vip + musicId + SECRET_SALT;
             const calculatedHash = CryptoJS.MD5(checkString).toString();
             
+            // Если хэш совпадает и vip=1 — включаем розовую тему
             if (vip === '1' && calculatedHash === receivedHash) {
                 document.body.setAttribute('data-vip', '1');
             } else {
                 document.body.setAttribute('data-vip', '0');
-                const wm = document.getElementById('watermark');
-                if (wm) wm.style.display = 'block';
             }
             
             run();
